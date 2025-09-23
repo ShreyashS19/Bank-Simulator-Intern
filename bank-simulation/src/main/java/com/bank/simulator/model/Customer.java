@@ -28,7 +28,7 @@ public class Customer {
         this.status = status;
     }
 
-    // Getters and Setters
+   
     public String getCustomerId() { return customerId; }
     public void setCustomerId(String customerId) { this.customerId = customerId; }
 

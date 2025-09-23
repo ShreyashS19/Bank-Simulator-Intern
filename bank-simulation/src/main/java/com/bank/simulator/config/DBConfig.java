@@ -13,7 +13,6 @@ public class DBConfig {
     private static final String DB_PASSWORD;
     
     static {
-        // Load MySQL JDBC Driver
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             System.out.println("MySQL JDBC Driver loaded in DBConfig.");

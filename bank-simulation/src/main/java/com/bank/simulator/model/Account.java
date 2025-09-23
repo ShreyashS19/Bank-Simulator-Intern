@@ -32,7 +32,7 @@ public class Account {
         this.status = status;
     }
 
-    // Getters and Setters
+    
     public String getAccountId() { return accountId; }
     public void setAccountId(String accountId) { this.accountId = accountId; }
 

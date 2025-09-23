@@ -26,7 +26,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
     }
 
     private void createDatabaseIfNotExists() throws SQLException {
-        // Load MySQL JDBC Driver explicitly
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             System.out.println("MySQL JDBC Driver loaded successfully.");

@@ -28,7 +28,7 @@ public class Transaction {
         this.senderDetails = senderDetails;
     }
 
-    // Getters and Setters
+    
     public String getTransactionId() { return transactionId; }
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 

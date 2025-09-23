@@ -4,6 +4,7 @@ import com.bank.simulator.config.DBConfig;
 import com.bank.simulator.model.Transaction;
 import com.bank.simulator.service.TransactionService;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,18 +16,23 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public String createTransaction(Transaction transaction) {
-        String transactionId = generateTransactionId();
-        transaction.setTransactionId(transactionId);
+    String transactionId = generateTransactionId();
+    transaction.setTransactionId(transactionId);
+    
+    String insertQuery = """
+        INSERT INTO Transaction (transaction_id, account_id, transaction_amount, 
+                               transaction_type, transaction_mode, receiver_details, sender_details) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """;
+    String updateBalanceQuery = """
+        UPDATE Account SET balance = balance + ? WHERE account_id = ?
+    """;
+    
+    try (Connection conn = DBConfig.getConnection()) {
+        conn.setAutoCommit(false); // Start transaction
         
-        String query = """
-            INSERT INTO Transaction (transaction_id, account_id, transaction_amount, 
-                                   transaction_type, transaction_mode, receiver_details, sender_details) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """;
-        
-        try (Connection conn = DBConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
+        // Insert transaction
+        try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
             stmt.setString(1, transaction.getTransactionId());
             stmt.setString(2, transaction.getAccountId());
             stmt.setBigDecimal(3, transaction.getTransactionAmount());
@@ -34,14 +40,31 @@ public class TransactionServiceImpl implements TransactionService {
             stmt.setString(5, transaction.getTransactionMode());
             stmt.setString(6, transaction.getReceiverDetails());
             stmt.setString(7, transaction.getSenderDetails());
-            
-            int result = stmt.executeUpdate();
-            return result > 0 ? transactionId : null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            stmt.executeUpdate();
         }
+        
+        // Update balance
+        try (PreparedStatement stmt = conn.prepareStatement(updateBalanceQuery)) {
+            BigDecimal amount = transaction.getTransactionType().equals("credited") 
+                ? transaction.getTransactionAmount() 
+                : transaction.getTransactionAmount().negate();
+            stmt.setBigDecimal(1, amount);
+            stmt.setString(2, transaction.getAccountId());
+            stmt.executeUpdate();
+        }
+        
+        conn.commit(); // Commit transaction
+        return transactionId;
+    } catch (SQLException e) {
+        e.printStackTrace();
+        try (Connection conn = DBConfig.getConnection()) {
+            conn.rollback(); // Rollback on error
+        } catch (SQLException rollbackEx) {
+            rollbackEx.printStackTrace();
+        }
+        return null;
     }
+}
 
     @Override
     public Transaction getTransactionById(String transactionId) {

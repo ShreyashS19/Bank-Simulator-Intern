@@ -40,22 +40,29 @@ public class TransactionController {
             }
 
             String transactionId = transactionService.createTransaction(transaction);
-            if (transactionId != null) {
-                return Response.status(Response.Status.CREATED)
-                    .entity(ApiResponse.success("Transaction created successfully", transactionId))
+        if (transactionId != null) {
+            return Response.status(Response.Status.CREATED)
+                .entity(ApiResponse.success("Transaction created successfully", transactionId))
+                .build();
+        } else {
+            // Check if it was due to insufficient balance
+            if ("debited".equals(transaction.getTransactionType())) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Transaction failed: Insufficient balance"))
                     .build();
             } else {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error("Failed to create transaction"))
                     .build();
             }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
         }
+    } catch (Exception e) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+            .build();
     }
-
+   }
+   
     @GET
     @Path("/{transaction_id}")
     public Response getTransaction(@PathParam("transaction_id") String transactionId) {

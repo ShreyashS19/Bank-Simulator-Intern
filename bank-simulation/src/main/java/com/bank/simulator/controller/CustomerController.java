@@ -2,7 +2,10 @@ package com.bank.simulator.controller;
 
 import com.bank.simulator.model.ApiResponse;
 import com.bank.simulator.model.Customer;
+import com.bank.simulator.service.CustomerService;  // Use interface
 import com.bank.simulator.service.impl.CustomerServiceImpl;
+import com.bank.simulator.validation.CustomerValidator;
+import com.bank.simulator.validation.ValidationResult;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -14,37 +17,29 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class CustomerController {
     
-    private final CustomerServiceImpl customerService = new CustomerServiceImpl();
+    // Use interface reference for better design
+    private final CustomerService customerService = new CustomerServiceImpl();
+    private final CustomerValidator customerValidator = new CustomerValidator();
 
     @POST
     @Path("/onboard")
     public Response createCustomer(Customer customer) {
         try {
-            // Validation
-            if (customer.getName() == null || customer.getName().trim().isEmpty()) {
+            System.out.println("=== CUSTOMER CREATION REQUEST ===");
+            
+            // Use validator
+            ValidationResult validationResult = customerValidator.validateCustomerForCreation(customer);
+            
+            if (!validationResult.isValid()) {
+                System.out.println("=== VALIDATION FAILED ===");
+                System.out.println("Errors: " + validationResult.getAllErrorMessages());
+                
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Customer name is required"))
+                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
                     .build();
             }
 
-            if (!customerService.isPhoneNumberValid(customer.getPhoneNumber())) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Phone number must be 10 digits and cannot start with 0"))
-                    .build();
-            }
-
-            if (customerService.isPhoneNumberExists(customer.getPhoneNumber())) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Phone number already exists"))
-                    .build();
-            }
-
-            if (customerService.isAadharNumberExists(customer.getAadharNumber())) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Aadhar number already exists"))
-                    .build();
-            }
-
+            // Set default status if not provided
             if (customer.getStatus() == null || customer.getStatus().trim().isEmpty()) {
                 customer.setStatus("Inactive");
             }
@@ -60,12 +55,15 @@ public class CustomerController {
                     .build();
             }
         } catch (Exception e) {
+            System.err.println("Exception in customer creation: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();
         }
     }
 
+    // ... rest of the methods remain the same
     @GET
     @Path("/{customer_id}")
     public Response getCustomer(@PathParam("customer_id") String customerId) {
@@ -89,9 +87,17 @@ public class CustomerController {
     @Path("/{customer_id}")
     public Response updateCustomer(@PathParam("customer_id") String customerId, Customer customer) {
         try {
-            if (!customerService.isPhoneNumberValid(customer.getPhoneNumber())) {
+            System.out.println("=== CUSTOMER UPDATE REQUEST ===");
+            
+            // Use validator for update
+            ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
+            
+            if (!validationResult.isValid()) {
+                System.out.println("=== UPDATE VALIDATION FAILED ===");
+                System.out.println("Errors: " + validationResult.getAllErrorMessages());
+                
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Phone number must be 10 digits and cannot start with 0"))
+                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
                     .build();
             }
 
@@ -146,6 +152,6 @@ public class CustomerController {
     @Path("/test")
     @Produces(MediaType.TEXT_PLAIN)
     public String test() {
-        return "CustomerController is working with your specified dependencies!";
+        return "CustomerController is working with validation!";
     }
 }

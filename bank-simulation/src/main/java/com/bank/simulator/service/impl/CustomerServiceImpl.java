@@ -8,6 +8,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.time.LocalDate;
+import java.time.Period;
+
 
 public class CustomerServiceImpl implements CustomerService {
     private static final AtomicInteger customerCounter = new AtomicInteger(1);
@@ -167,6 +170,75 @@ public class CustomerServiceImpl implements CustomerService {
         }
         return false;
     }
+     
+    /**
+ * Add these methods to your existing CustomerServiceImpl class
+ */
+
+@Override
+public boolean isEmailValid(String email) {
+    if (email == null || email.trim().isEmpty()) {
+        return false;
+    }
+    
+    String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+    return email.matches(emailRegex);
+}
+
+@Override
+public boolean isEmailExists(String email) {
+    String query = "SELECT COUNT(*) FROM Customer WHERE email = ?";
+    
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+        
+        stmt.setString(1, email);
+        ResultSet rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
+@Override
+public boolean isAadharValid(String aadhar) {
+    if (aadhar == null || aadhar.trim().isEmpty()) {
+        return false;
+    }
+    
+    String cleanAadhar = aadhar.replaceAll("[^0-9]", "");
+    return cleanAadhar.length() == 12 && cleanAadhar.matches("\\d{12}");
+}
+
+@Override
+public boolean isPinValid(String pin) {
+    if (pin == null || pin.trim().isEmpty()) {
+        return false;
+    }
+    
+    return pin.matches("^[0-9]{4,6}$");
+}
+
+@Override
+public boolean isAgeValid(LocalDate dob) {
+    if (dob == null) {
+        return false;
+    }
+    
+    LocalDate now = LocalDate.now();
+    
+    if (dob.isAfter(now)) {
+        return false;
+    }
+    
+    int age = Period.between(dob, now).getYears();
+    return age >= 18 && age <= 120;
+}
+
 
     @Override
     public boolean isAadharNumberExists(String aadharNumber) {

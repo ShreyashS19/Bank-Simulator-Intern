@@ -1,14 +1,15 @@
 package com.bank.simulator.service;
 
 import com.bank.simulator.model.Account;
-import java.math.BigDecimal;
 
 public interface AccountService {
     // Core CRUD operations
     String createAccount(Account account);
     Account getAccountById(String accountId);
+    Account getAccountByCustomerId(String customerId);
+    Account getAccountByAccountNumber(String accountNumber);
     boolean updateAccount(String accountId, Account account);
-    boolean deleteAccount(String accountId);
+    boolean deleteAccount(String accountId);  // Soft delete
     
     // Validation and utility methods
     boolean isAccountNumberExists(String accountNumber);

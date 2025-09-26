@@ -8,139 +8,143 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 public class AccountValidator {
 
+    private static final Pattern IFSC_PATTERN = Pattern.compile("^[A-Z]{4}0[A-Z0-9]{6}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^[1-9][0-9]{9}$");
+    private static final Pattern AADHAR_PATTERN = Pattern.compile("^[0-9]{12}$");
+
     /**
-     * Main validation method for account creation
+     * Main validation method for account creation (with auto-generated customerId)
      */
     public ValidationResult validateAccountForCreation(Account account) {
         System.out.println("=== ACCOUNT CREATION VALIDATION STARTED ===");
-        System.out.println("Customer ID: " + account.getCustomerId());
+        System.out.println("Aadhar Number: " + account.getAadharNumber());
         System.out.println("Account Number: " + account.getAccountNumber());
-        System.out.println("Phone Linked: " + account.getPhoneNumberLinked());
+        System.out.println("IFSC Code: " + account.getIfscCode());
         
         ValidationResult result = new ValidationResult();
         
-        // Basic field validations
-        ValidationResult customerIdValidation = validateCustomerId(account.getCustomerId());
-        if (!customerIdValidation.isValid()) {
-            result.addError(customerIdValidation.getFirstErrorMessage());
+        // Skip customer ID validation since it's auto-generated
+        
+        // Required field validations
+        if (account.getAccountNumber() == null || account.getAccountNumber().trim().isEmpty()) {
+            System.err.println("Error: Required field missing (account number)");
+            result.addError("Account number is required");
         }
         
-        ValidationResult phoneLinkedValidation = validatePhoneNumberLinked(account.getPhoneNumberLinked());
-        if (!phoneLinkedValidation.isValid()) {
-            result.addError(phoneLinkedValidation.getFirstErrorMessage());
+        if (account.getAadharNumber() == null || account.getAadharNumber().trim().isEmpty()) {
+            System.err.println("Error: Required field missing (aadhar number)");
+            result.addError("Aadhar number is required");
         }
         
+        if (account.getIfscCode() == null || account.getIfscCode().trim().isEmpty()) {
+            System.err.println("Error: Required field missing (IFSC code)");
+            result.addError("IFSC code is required");
+        }
+        
+        if (account.getBankName() == null || account.getBankName().trim().isEmpty()) {
+            System.err.println("Error: Required field missing (bank name)");
+            result.addError("Bank name is required");
+        }
+        
+        if (account.getNameOnAccount() == null || account.getNameOnAccount().trim().isEmpty()) {
+            System.err.println("Error: Required field missing (name on account)");
+            result.addError("Name on account is required");
+        }
+        
+        // Format validations
         ValidationResult accountNumberValidation = validateAccountNumber(account.getAccountNumber());
         if (!accountNumberValidation.isValid()) {
+            System.err.println("Error: Invalid account number format");
             result.addError(accountNumberValidation.getFirstErrorMessage());
         }
         
-        ValidationResult accountTypeValidation = validateAccountType(account.getAccountType());
-        if (!accountTypeValidation.isValid()) {
-            result.addError(accountTypeValidation.getFirstErrorMessage());
+        ValidationResult aadharValidation = validateAadharNumber(account.getAadharNumber());
+        if (!aadharValidation.isValid()) {
+            System.err.println("Error: Invalid aadhar number format");
+            result.addError(aadharValidation.getFirstErrorMessage());
         }
         
-        ValidationResult accountNameValidation = validateAccountName(account.getAccountName());
-        if (!accountNameValidation.isValid()) {
-            result.addError(accountNameValidation.getFirstErrorMessage());
+        ValidationResult ifscValidation = validateIfscCode(account.getIfscCode());
+        if (!ifscValidation.isValid()) {
+            System.err.println("Error: Invalid IFSC code format");
+            result.addError(ifscValidation.getFirstErrorMessage());
         }
         
-        ValidationResult statusValidation = validateStatus(account.getStatus());
-        if (!statusValidation.isValid()) {
-            result.addError(statusValidation.getFirstErrorMessage());
+        ValidationResult amountValidation = validateAmount(account.getAmount());
+        if (!amountValidation.isValid()) {
+            System.err.println("Error: Invalid amount");
+            result.addError(amountValidation.getFirstErrorMessage());
         }
         
-        ValidationResult balanceValidation = validateBalance(account.getBalance());
-        if (!balanceValidation.isValid()) {
-            result.addError(balanceValidation.getFirstErrorMessage());
+        ValidationResult bankNameValidation = validateBankName(account.getBankName());
+        if (!bankNameValidation.isValid()) {
+            System.err.println("Error: Invalid bank name");
+            result.addError(bankNameValidation.getFirstErrorMessage());
         }
         
-        // Database-dependent validations
+        ValidationResult nameOnAccountValidation = validateNameOnAccount(account.getNameOnAccount());
+        if (!nameOnAccountValidation.isValid()) {
+            System.err.println("Error: Invalid name on account");
+            result.addError(nameOnAccountValidation.getFirstErrorMessage());
+        }
+        
+        // Database validations
         if (result.isValid()) {
             System.out.println("=== BASIC VALIDATIONS PASSED - CHECKING DATABASE CONSTRAINTS ===");
             
-            ValidationResult customerExistsValidation = validateCustomerExists(account.getCustomerId());
-            if (!customerExistsValidation.isValid()) {
-                result.addError(customerExistsValidation.getFirstErrorMessage(), "CUSTOMER_NOT_EXISTS");
-                return result; // Return early if customer doesn't exist
+            // Check if aadhar exists in Customer Module
+            ValidationResult aadharExistsValidation = validateAadharExistsInCustomer(account.getAadharNumber());
+            if (!aadharExistsValidation.isValid()) {
+                System.err.println("Error: Aadhar number not found");
+                result.addError("Aadhar number is not linked with any customer", "AADHAR_NOT_FOUND");
             }
             
+            // Check account number uniqueness
             ValidationResult accountNumberUniqueValidation = validateAccountNumberUniqueness(account.getAccountNumber());
             if (!accountNumberUniqueValidation.isValid()) {
+                System.err.println("Error: Duplicate account creation attempted");
                 result.addError(accountNumberUniqueValidation.getFirstErrorMessage(), "ACCOUNT_NUMBER_EXISTS");
-            }
-            
-            ValidationResult phoneLinkValidation = validatePhoneNumberLinkedToCustomer(
-                account.getCustomerId(), account.getPhoneNumberLinked());
-            if (!phoneLinkValidation.isValid()) {
-                result.addError(phoneLinkValidation.getFirstErrorMessage(), "PHONE_NOT_LINKED");
             }
         }
         
         System.out.println("=== ACCOUNT VALIDATION RESULT ===");
         System.out.println("Valid: " + result.isValid());
         if (!result.isValid()) {
-            System.out.println("Errors: " + result.getAllErrorMessages());
-            System.out.println("Error Code: " + result.getErrorCode());
+            System.err.println("Validation Errors: " + result.getAllErrorMessages());
+            System.err.println("Error Code: " + result.getErrorCode());
         }
         
         return result;
     }
 
     /**
-     * Validation for account updates
+     * Check if aadhar number exists in Customer table
      */
-    public ValidationResult validateAccountForUpdate(String accountId, Account account) {
-        System.out.println("=== ACCOUNT UPDATE VALIDATION STARTED ===");
-        System.out.println("Account ID: " + accountId);
+    public ValidationResult validateAadharExistsInCustomer(String aadharNumber) {
+        String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ?";
         
-        ValidationResult result = new ValidationResult();
-        
-        // Check if account exists
-        if (!accountExists(accountId)) {
-            result.addError("Account not found with ID: " + accountId);
-            return result;
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, aadharNumber);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                System.out.println("✓ Aadhar number found in Customer Module: " + aadharNumber);
+                return ValidationResult.success();
+            } else {
+                System.out.println("✗ Aadhar number not found in Customer Module: " + aadharNumber);
+                return ValidationResult.failure("Aadhar number is not linked with any customer");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error checking aadhar existence: " + e.getMessage());
+            return ValidationResult.failure("Database error while validating aadhar number");
         }
-        
-        // Run creation validations (might need to modify for updates)
-        ValidationResult basicValidation = validateAccountForCreation(account);
-        if (!basicValidation.isValid()) {
-            result.addError(basicValidation.getAllErrorMessages());
-        }
-        
-        return result;
-    }
-
-    /**
-     * Validate customer ID format and requirement
-     */
-    public ValidationResult validateCustomerId(String customerId) {
-        if (customerId == null || customerId.trim().isEmpty()) {
-            return ValidationResult.failure("Customer ID is required");
-        }
-        
-        // Optional: Validate format if you want to enforce CUST_<number> format
-        if (!customerId.matches("^CUST_[0-9]+$")) {
-            return ValidationResult.failure("Customer ID format is invalid");
-        }
-        
-        return ValidationResult.success();
-    }
-
-    /**
-     * Validate phone number linked (reusing customer validation logic)
-     */
-    public ValidationResult validatePhoneNumberLinked(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            return ValidationResult.failure("Phone number linked is required");
-        }
-        
-        // Reuse customer phone validation
-        CustomerValidator customerValidator = new CustomerValidator();
-        return customerValidator.validatePhoneNumberFormat(phoneNumber);
     }
 
     /**
@@ -151,108 +155,127 @@ public class AccountValidator {
             return ValidationResult.failure("Account number is required");
         }
         
-        if (accountNumber.length() < 10 || accountNumber.length() > 20) {
-            return ValidationResult.failure("Account number must be between 10-20 characters");
+        if (accountNumber.length() < 10 || accountNumber.length() > 25) {
+            return ValidationResult.failure("Account number must be between 10-25 characters");
         }
         
         return ValidationResult.success();
     }
 
     /**
-     * Validate account type
+     * Validate Aadhar number (12 digits)
      */
-    public ValidationResult validateAccountType(String accountType) {
-        if (accountType == null || accountType.trim().isEmpty()) {
-            return ValidationResult.failure("Account type is required");
+    public ValidationResult validateAadharNumber(String aadharNumber) {
+        if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
+            return ValidationResult.failure("Aadhar number is required");
         }
         
-        String[] validTypes = {"Savings", "Current", "Fixed Deposit", "Recurring Deposit"};
-        for (String validType : validTypes) {
-            if (validType.equalsIgnoreCase(accountType)) {
-                return ValidationResult.success();
-            }
+        String cleanAadhar = aadharNumber.replaceAll("[^0-9]", "");
+        
+        if (cleanAadhar.length() != 12) {
+            return ValidationResult.failure("Aadhar number must be exactly 12 digits");
         }
         
-        return ValidationResult.failure("Invalid account type");
-    }
-
-    /**
-     * Validate account name
-     */
-    public ValidationResult validateAccountName(String accountName) {
-        if (accountName == null || accountName.trim().isEmpty()) {
-            return ValidationResult.failure("Account name is required");
-        }
-        
-        if (accountName.trim().length() < 3) {
-            return ValidationResult.failure("Account name must be at least 3 characters");
-        }
-        
-        if (accountName.length() > 100) {
-            return ValidationResult.failure("Account name cannot exceed 100 characters");
+        if (!AADHAR_PATTERN.matcher(cleanAadhar).matches()) {
+            return ValidationResult.failure("Aadhar number format is invalid");
         }
         
         return ValidationResult.success();
     }
 
     /**
-     * Validate account status
+     * Validate IFSC code (11 characters)
      */
-    public ValidationResult validateStatus(String status) {
-        if (status == null || status.trim().isEmpty()) {
-            return ValidationResult.failure("Account status is required");
+    public ValidationResult validateIfscCode(String ifscCode) {
+        if (ifscCode == null || ifscCode.trim().isEmpty()) {
+            return ValidationResult.failure("IFSC code is required");
         }
         
-        String[] validStatuses = {"Active", "Inactive", "Suspended", "Closed"};
-        for (String validStatus : validStatuses) {
-            if (validStatus.equalsIgnoreCase(status)) {
-                return ValidationResult.success();
-            }
+        if (ifscCode.length() != 11) {
+            return ValidationResult.failure("IFSC code must be exactly 11 characters");
         }
         
-        return ValidationResult.failure("Invalid account status");
-    }
-
-    /**
-     * Validate account balance
-     */
-    public ValidationResult validateBalance(BigDecimal balance) {
-        if (balance == null) {
-            // Balance can be null, will default to 50
-            return ValidationResult.success();
-        }
-        
-        if (balance.compareTo(BigDecimal.ZERO) < 0) {
-            return ValidationResult.failure("Account balance cannot be negative");
+        if (!IFSC_PATTERN.matcher(ifscCode.toUpperCase()).matches()) {
+            return ValidationResult.failure("IFSC code format is invalid. Format: ABCD0123456");
         }
         
         return ValidationResult.success();
     }
 
     /**
-     * Check if customer exists in database
+     * Validate amount (minimum balance of 600)
      */
-    public ValidationResult validateCustomerExists(String customerId) {
-        String query = "SELECT COUNT(*) FROM Customer WHERE customer_id = ?";
-        
-        try (Connection conn = DBConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-            stmt.setString(1, customerId);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next() && rs.getInt(1) > 0) {
-                System.out.println("✓ Customer exists: " + customerId);
-                return ValidationResult.success();
-            } else {
-                System.out.println("✗ Customer not found: " + customerId);
-                return ValidationResult.failure("Customer does not exist. Please provide a valid customer ID.");
-            }
-            
-        } catch (SQLException e) {
-            System.err.println("Error checking customer existence: " + e.getMessage());
-            return ValidationResult.failure("Database error while validating customer");
+   /**
+ * Validate amount (minimum balance of 600)
+ */
+public ValidationResult validateAmount(BigDecimal amount) {
+    System.out.println("=== AMOUNT VALIDATION DEBUG ===");
+    System.out.println("Amount received: " + amount);
+    System.out.println("Amount class: " + (amount != null ? amount.getClass() : "null"));
+    
+    if (amount == null) {
+        System.out.println("Amount is null - will be set to default 600 after validation");
+        return ValidationResult.success(); // Allow null - will be set to default later
+    }
+    
+    System.out.println("Comparing amount " + amount + " with minimum 600");
+    BigDecimal minimumBalance = BigDecimal.valueOf(600);
+    int comparison = amount.compareTo(minimumBalance);
+    
+    System.out.println("Comparison result: " + comparison + " (negative means amount < 600)");
+    
+    if (comparison < 0) {
+        System.out.println("❌ VALIDATION FAILED - Amount " + amount + " is less than minimum " + minimumBalance);
+        System.err.println("Error: Amount below minimum balance");
+        return ValidationResult.failure("Amount must have a minimum balance of 600");
+    }
+    
+    if (amount.scale() > 2) {
+        System.out.println("❌ VALIDATION FAILED - Amount has more than 2 decimal places");
+        return ValidationResult.failure("Amount cannot have more than 2 decimal places");
+    }
+    
+    System.out.println("✅ Amount validation passed: " + amount);
+    return ValidationResult.success();
+}
+
+
+    /**
+     * Validate bank name
+     */
+    public ValidationResult validateBankName(String bankName) {
+        if (bankName == null || bankName.trim().isEmpty()) {
+            return ValidationResult.failure("Bank name is required");
         }
+        
+        if (bankName.trim().length() < 2) {
+            return ValidationResult.failure("Bank name must be at least 2 characters");
+        }
+        
+        if (bankName.length() > 100) {
+            return ValidationResult.failure("Bank name cannot exceed 100 characters");
+        }
+        
+        return ValidationResult.success();
+    }
+
+    /**
+     * Validate name on account
+     */
+    public ValidationResult validateNameOnAccount(String nameOnAccount) {
+        if (nameOnAccount == null || nameOnAccount.trim().isEmpty()) {
+            return ValidationResult.failure("Name on account is required");
+        }
+        
+        if (nameOnAccount.trim().length() < 2) {
+            return ValidationResult.failure("Name on account must be at least 2 characters");
+        }
+        
+        if (nameOnAccount.length() > 100) {
+            return ValidationResult.failure("Name on account cannot exceed 100 characters");
+        }
+        
+        return ValidationResult.success();
     }
 
     /**
@@ -282,46 +305,91 @@ public class AccountValidator {
         }
     }
 
+    // Keep existing validation methods for updates...
     /**
-     * Validate phone number is linked to customer
-     */
-    public ValidationResult validatePhoneNumberLinkedToCustomer(String customerId, String phoneNumber) {
-        String query = "SELECT phone_number FROM Customer WHERE customer_id = ?";
+ * Validation for account updates (excluding account_number & customer_id)
+ */
+public ValidationResult validateAccountForUpdate(String accountId, Account account) {
+    System.out.println("=== ACCOUNT UPDATE VALIDATION STARTED ===");
+    System.out.println("Account ID: " + accountId);
+    System.out.println("Aadhar Number: " + account.getAadharNumber());
+    
+    ValidationResult result = new ValidationResult();
+    
+    // Check if account exists
+    if (!accountExists(accountId)) {
+        result.addError("Account not found with ID: " + accountId);
+        return result;
+    }
+    
+    // Validate required fields for update
+    if (account.getAadharNumber() == null || account.getAadharNumber().trim().isEmpty()) {
+        System.err.println("Error: Required field missing (aadhar number)");
+        result.addError("Aadhar number is required");
+    }
+    
+    if (account.getIfscCode() == null || account.getIfscCode().trim().isEmpty()) {
+        System.err.println("Error: Required field missing (IFSC code)");
+        result.addError("IFSC code is required");
+    }
+    
+    if (account.getBankName() == null || account.getBankName().trim().isEmpty()) {
+        System.err.println("Error: Required field missing (bank name)");
+        result.addError("Bank name is required");
+    }
+    
+    if (account.getNameOnAccount() == null || account.getNameOnAccount().trim().isEmpty()) {
+        System.err.println("Error: Required field missing (name on account)");
+        result.addError("Name on account is required");
+    }
+    
+    // Format validations
+    ValidationResult aadharValidation = validateAadharNumber(account.getAadharNumber());
+    if (!aadharValidation.isValid()) {
+        result.addError(aadharValidation.getFirstErrorMessage());
+    }
+    
+    ValidationResult ifscValidation = validateIfscCode(account.getIfscCode());
+    if (!ifscValidation.isValid()) {
+        result.addError(ifscValidation.getFirstErrorMessage());
+    }
+    
+    ValidationResult amountValidation = validateAmount(account.getAmount());
+    if (!amountValidation.isValid()) {
+        result.addError(amountValidation.getFirstErrorMessage());
+    }
+    
+    ValidationResult bankNameValidation = validateBankName(account.getBankName());
+    if (!bankNameValidation.isValid()) {
+        result.addError(bankNameValidation.getFirstErrorMessage());
+    }
+    
+    ValidationResult nameOnAccountValidation = validateNameOnAccount(account.getNameOnAccount());
+    if (!nameOnAccountValidation.isValid()) {
+        result.addError(nameOnAccountValidation.getFirstErrorMessage());
+    }
+    
+    // Database validations
+    if (result.isValid()) {
+        System.out.println("=== BASIC UPDATE VALIDATIONS PASSED ===");
         
-        try (Connection conn = DBConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-            stmt.setString(1, customerId);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                String customerPhone = rs.getString("phone_number");
-                
-                System.out.println("=== PHONE LINKING VALIDATION ===");
-                System.out.println("Customer ID: " + customerId);
-                System.out.println("Customer Phone: " + customerPhone);
-                System.out.println("Account Phone Linked: " + phoneNumber);
-                
-                if (customerPhone.equals(phoneNumber)) {
-                    System.out.println("✓ Phone number is correctly linked");
-                    return ValidationResult.success();
-                } else {
-                    System.out.println("✗ Phone number mismatch");
-                    return ValidationResult.failure("Phone number is not linked to this customer. Please use the customer's registered phone number.");
-                }
-            } else {
-                return ValidationResult.failure("Customer not found during phone linking validation");
-            }
-            
-        } catch (SQLException e) {
-            System.err.println("Error validating phone linking: " + e.getMessage());
-            return ValidationResult.failure("Database error while validating phone linking");
+        // Check if aadhar exists in Customer Module
+        ValidationResult aadharExistsValidation = validateAadharExistsInCustomer(account.getAadharNumber());
+        if (!aadharExistsValidation.isValid()) {
+            System.err.println("Error: Aadhar number not found for update");
+            result.addError("Aadhar number is not linked with any customer", "AADHAR_NOT_FOUND");
         }
     }
+    
+    System.out.println("=== ACCOUNT UPDATE VALIDATION RESULT ===");
+    System.out.println("Valid: " + result.isValid());
+    if (!result.isValid()) {
+        System.err.println("Update Validation Errors: " + result.getAllErrorMessages());
+    }
+    
+    return result;
+}
 
-    /**
-     * Check if account exists
-     */
     private boolean accountExists(String accountId) {
         String query = "SELECT COUNT(*) FROM Account WHERE account_id = ?";
         

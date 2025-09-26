@@ -65,18 +65,21 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 )
             """;
 
+            // NEW ACCOUNT TABLE STRUCTURE ACCORDING TO YOUR REQUIREMENTS
             String accountTable = """
                 CREATE TABLE IF NOT EXISTS Account (
                     account_id VARCHAR(50) PRIMARY KEY,
                     customer_id VARCHAR(50) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    balance DECIMAL(15,2) DEFAULT 50.00,
-                    account_type VARCHAR(50) NOT NULL,
-                    account_name VARCHAR(100) NOT NULL,
-                    account_number VARCHAR(20) NOT NULL UNIQUE,
+                    account_number VARCHAR(30) NOT NULL UNIQUE,
+                    aadhar_number VARCHAR(12) NOT NULL,
+                    ifsc_code VARCHAR(11) NOT NULL,
                     phone_number_linked VARCHAR(10) NOT NULL,
-                    status VARCHAR(20) NOT NULL,
+                    amount DECIMAL(15,2) DEFAULT 600.00,
+                    bank_name VARCHAR(100) NOT NULL,
+                    name_on_account VARCHAR(100) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'ACTIVE',
+                    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     FOREIGN KEY (customer_id) REFERENCES Customer(customer_id) ON DELETE CASCADE
                 )
             """;
@@ -98,7 +101,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
             stmt.executeUpdate(customerTable);
             System.out.println(" -> Table 'Customer' is ready.");
             stmt.executeUpdate(accountTable);
-            System.out.println(" -> Table 'Account' is ready.");
+            System.out.println(" -> Table 'Account' is ready with new structure.");
             stmt.executeUpdate(transactionTable);
             System.out.println(" -> Table 'Transaction' is ready.");
             

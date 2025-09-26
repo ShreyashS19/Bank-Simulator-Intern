@@ -16,36 +16,55 @@ public class CustomerServiceImpl implements CustomerService {
     private static final AtomicInteger customerCounter = new AtomicInteger(1);
 
     @Override
-    public String createCustomer(Customer customer) {
-        String customerId = generateCustomerId();
-        customer.setCustomerId(customerId);
-        
-        String query = """
-            INSERT INTO Customer (customer_id, name, phone_number, email, address, 
-                                customer_pin, aadhar_number, dob, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-        
-        try (Connection conn = DBConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-            stmt.setString(1, customer.getCustomerId());
-            stmt.setString(2, customer.getName());
-            stmt.setString(3, customer.getPhoneNumber());
-            stmt.setString(4, customer.getEmail());
-            stmt.setString(5, customer.getAddress());
-            stmt.setString(6, customer.getCustomerPin());
-            stmt.setString(7, customer.getAadharNumber());
-            stmt.setDate(8, Date.valueOf(customer.getDob()));
-            stmt.setString(9, customer.getStatus());
-            
-            int result = stmt.executeUpdate();
-            return result > 0 ? customerId : null;
-        } catch (SQLException e) {
-            e.printStackTrace();
+public String createCustomer(Customer customer) {
+    String customerId = generateCustomerId();
+    customer.setCustomerId(customerId);
+
+    String query = """
+        INSERT INTO Customer (customer_id, name, phone_number, email, address, 
+                            customer_pin, aadhar_number, dob, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """;
+
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        stmt.setString(1, customer.getCustomerId());
+        stmt.setString(2, customer.getName());
+        stmt.setString(3, customer.getPhoneNumber());
+        stmt.setString(4, customer.getEmail());
+        stmt.setString(5, customer.getAddress());
+        stmt.setString(6, customer.getCustomerPin());
+        stmt.setString(7, customer.getAadharNumber());
+        stmt.setDate(8, Date.valueOf(customer.getDob()));
+        stmt.setString(9, customer.getStatus());
+
+        int result = stmt.executeUpdate();
+        if (result > 0) {
+            System.out.println("\n"); // Empty line for readability
+            System.out.println("=== CUSTOMER CREATED SUCCESSFULLY ===");
+            System.out.println("Customer ID: " + customerId);
+            System.out.println("Customer Name: " + customer.getName());
+            System.out.println("Phone Number: " + customer.getPhoneNumber());
+            System.out.println("Email: " + customer.getEmail());
+            System.out.println("Aadhar Number: " + customer.getAadharNumber());
+            System.out.println("Status: " + customer.getStatus());
+            System.out.println("Date of Birth: " + customer.getDob());
+            System.out.println("=== END CUSTOMER CREATION ===");
+            System.out.println("\n"); // Empty line after success
+            return customerId;
+        } else {
+            System.err.println("Failed to create customer");
             return null;
         }
+
+    } catch (SQLException e) {
+        System.err.println("Database error: " + e.getMessage());
+        e.printStackTrace();
+        return null;
     }
+}
+
 
     @Override
     public Customer getCustomerById(String customerId) {

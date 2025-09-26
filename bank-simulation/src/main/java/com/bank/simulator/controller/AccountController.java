@@ -2,7 +2,7 @@ package com.bank.simulator.controller;
 
 import com.bank.simulator.model.Account;
 import com.bank.simulator.model.ApiResponse;
-import com.bank.simulator.service.AccountService;  // Use interface
+import com.bank.simulator.service.AccountService;
 import com.bank.simulator.service.impl.AccountServiceImpl;
 import com.bank.simulator.validation.AccountValidator;
 import com.bank.simulator.validation.ValidationResult;
@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 @Consumes(MediaType.APPLICATION_JSON)
 public class AccountController {
     
-    // Use interface reference
     private final AccountService accountService = new AccountServiceImpl();
     private final AccountValidator accountValidator = new AccountValidator();
 
@@ -27,34 +26,39 @@ public class AccountController {
         try {
             System.out.println("=== ACCOUNT CREATION REQUEST ===");
             
-            // Use validator
             ValidationResult validationResult = accountValidator.validateAccountForCreation(account);
             
             if (!validationResult.isValid()) {
-                System.out.println("=== ACCOUNT VALIDATION FAILED ===");
-                System.out.println("Errors: " + validationResult.getAllErrorMessages());
-                System.out.println("Error Code: " + validationResult.getErrorCode());
+                System.err.println("=== ACCOUNT VALIDATION FAILED ===");
+                System.err.println("Error: " + validationResult.getFirstErrorMessage());
                 
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
                     .build();
             }
             
-            // Set default balance if not provided
-            if (account.getBalance() == null) {
-                account.setBalance(BigDecimal.valueOf(50.00));
+            // Set defaults only after validation passes
+            if (account.getAmount() == null) {
+                account.setAmount(BigDecimal.valueOf(600.00));
             }
             
-            String accountId = accountService.createAccount(account);
+            if (account.getStatus() == null || account.getStatus().trim().isEmpty()) {
+                account.setStatus("ACTIVE");
+            }
             
-            if (accountId != null && !accountId.startsWith("CUSTOMER_") && 
-                !accountId.startsWith("PHONE_") && !accountId.startsWith("ACCOUNT_")) {
-                
-                System.out.println("=== ACCOUNT CREATED SUCCESSFULLY ===");
-                System.out.println("New Account ID: " + accountId);
-                
+            String result = accountService.createAccount(account);
+            
+            if (result != null && result.startsWith("ACC_")) {
                 return Response.status(Response.Status.CREATED)
-                    .entity(ApiResponse.success("Account created successfully", accountId))
+                    .entity(ApiResponse.success("Account created successfully", result))
+                    .build();
+            } else if (result != null && result.startsWith("ERROR:")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error(result.substring(7)))
+                    .build();
+            } else if ("ACCOUNT_NUMBER_EXISTS".equals(result)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number already exists"))
                     .build();
             } else {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -63,8 +67,7 @@ public class AccountController {
             }
             
         } catch (Exception e) {
-            System.err.println("=== EXCEPTION IN ACCOUNT CREATION ===");
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Exception in account creation: " + e.getMessage());
             e.printStackTrace();
             
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -73,12 +76,49 @@ public class AccountController {
         }
     }
 
-    // ... rest of the methods remain the same
     @GET
     @Path("/{account_id}")
     public Response getAccount(@PathParam("account_id") String accountId) {
         try {
             Account account = accountService.getAccountById(accountId);
+            if (account != null) {
+                return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Account not found"))
+                    .build();
+            }
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    @GET
+    @Path("/customer/{customer_id}")
+    public Response getAccountByCustomerId(@PathParam("customer_id") String customerId) {
+        try {
+            Account account = accountService.getAccountByCustomerId(customerId);
+            if (account != null) {
+                return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Account not found for customer"))
+                    .build();
+            }
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    @GET
+    @Path("/number/{account_number}")
+    public Response getAccountByAccountNumber(@PathParam("account_number") String accountNumber) {
+        try {
+            Account account = accountService.getAccountByAccountNumber(accountNumber);
             if (account != null) {
                 return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
             } else {
@@ -99,12 +139,10 @@ public class AccountController {
         try {
             System.out.println("=== ACCOUNT UPDATE REQUEST ===");
             
-            // Use validator for update
             ValidationResult validationResult = accountValidator.validateAccountForUpdate(accountId, account);
             
             if (!validationResult.isValid()) {
-                System.out.println("=== UPDATE VALIDATION FAILED ===");
-                System.out.println("Errors: " + validationResult.getAllErrorMessages());
+                System.err.println("Account update validation failed: " + validationResult.getFirstErrorMessage());
                 
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
@@ -130,15 +168,18 @@ public class AccountController {
     @Path("/{account_id}")
     public Response deleteAccount(@PathParam("account_id") String accountId) {
         try {
+            System.out.println("=== ACCOUNT DELETION REQUEST ===");
+            
             boolean deleted = accountService.deleteAccount(accountId);
             if (deleted) {
-                return Response.ok(ApiResponse.success("Account deleted successfully")).build();
+                return Response.ok(ApiResponse.success("Account deleted permanently")).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Account not found"))
+                    .entity(ApiResponse.error("Account not found or deletion failed"))
                     .build();
             }
         } catch (Exception e) {
+            System.err.println("Exception during account deletion: " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();

@@ -286,10 +286,11 @@ public class AccountServiceImpl implements AccountService {
         return null;
     }
 
-    @Override
+@Override
 public boolean updateAccount(String accountId, Account account) {
     System.out.println("=== ACCOUNT UPDATE DEBUG STARTED ===");
     System.out.println("Account ID: " + accountId);
+    System.out.println("New Account Number: " + account.getAccountNumber());
     System.out.println("Aadhar Number: " + account.getAadharNumber());
     
     // Step 1: Get customer ID based on aadhar number
@@ -310,9 +311,9 @@ public boolean updateAccount(String accountId, Account account) {
     System.out.println("Auto-linked Customer ID: " + customerId);
     System.out.println("Auto-linked Phone Number: " + customerPhone);
     
-    // Step 3: Update account (account_number and customer_id remain fixed)
+    // Step 3: Update account (INCLUDING account_number)
     String query = """
-        UPDATE Account SET aadhar_number = ?, ifsc_code = ?, phone_number_linked = ?, 
+        UPDATE Account SET account_number = ?, aadhar_number = ?, ifsc_code = ?, phone_number_linked = ?, 
                          amount = ?, bank_name = ?, name_on_account = ?, status = ? 
         WHERE account_id = ?
     """;
@@ -321,31 +322,34 @@ public boolean updateAccount(String accountId, Account account) {
          PreparedStatement stmt = conn.prepareStatement(query)) {
         
         System.out.println("=== UPDATING ACCOUNT RECORD ===");
+        System.out.println("Setting account_number to: " + account.getAccountNumber());
         
-        stmt.setString(1, account.getAadharNumber());
-        stmt.setString(2, account.getIfscCode());
-        stmt.setString(3, account.getPhoneNumberLinked()); // Now properly set
-        stmt.setBigDecimal(4, account.getAmount());
-        stmt.setString(5, account.getBankName());
-        stmt.setString(6, account.getNameOnAccount());
-        stmt.setString(7, account.getStatus());
-        stmt.setString(8, accountId);
+        stmt.setString(1, account.getAccountNumber());  // ← This was missing!
+        stmt.setString(2, account.getAadharNumber());
+        stmt.setString(3, account.getIfscCode());
+        stmt.setString(4, account.getPhoneNumberLinked());
+        stmt.setBigDecimal(5, account.getAmount());
+        stmt.setString(6, account.getBankName());
+        stmt.setString(7, account.getNameOnAccount());
+        stmt.setString(8, account.getStatus());
+        stmt.setString(9, accountId);  // WHERE clause
         
         int result = stmt.executeUpdate();
         
         if (result > 0) {
-            System.out.println("\n"); // Empty line for readability
+            System.out.println("\n");
             System.out.println("=== ACCOUNT UPDATED SUCCESSFULLY ===");
             System.out.println("Account ID: " + accountId);
+            System.out.println("New Account Number: " + account.getAccountNumber());
             System.out.println("Customer ID: " + customerId);
             System.out.println("Phone Linked: " + account.getPhoneNumberLinked());
             System.out.println("Amount: " + account.getAmount());
             System.out.println("Bank Name: " + account.getBankName());
             System.out.println("Name on Account: " + account.getNameOnAccount());
             System.out.println("Status: " + account.getStatus());
-            System.out.println("Updated fields: Aadhar, IFSC, Phone, Amount, Bank Name, Name on Account, Status");
+            System.out.println("Updated fields: Account Number, Aadhar, IFSC, Phone, Amount, Bank Name, Name on Account, Status");
             System.out.println("=== END ACCOUNT UPDATE ===");
-            System.out.println("\n"); // Empty line after success
+            System.out.println("\n");
         } else {
             System.err.println("Error: Account update failed - no rows affected");
         }

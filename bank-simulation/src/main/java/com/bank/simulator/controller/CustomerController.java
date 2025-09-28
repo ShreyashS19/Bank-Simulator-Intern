@@ -84,37 +84,37 @@ public class CustomerController {
     }
 
     @PUT
-    @Path("/{customer_id}")
-    public Response updateCustomer(@PathParam("customer_id") String customerId, Customer customer) {
-        try {
-            System.out.println("=== CUSTOMER UPDATE REQUEST ===");
+@Path("/{customer_id}")
+public Response updateCustomer(@PathParam("customer_id") String customerId, Customer customer) {
+    try {
+        System.out.println("=== CUSTOMER UPDATE REQUEST ===");
+        
+        // Use UPDATE validation method, not creation validation
+        ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
+        
+        if (!validationResult.isValid()) {
+            System.err.println("=== UPDATE VALIDATION FAILED ===");
+            System.err.println("Errors: " + validationResult.getAllErrorMessages());
             
-            // Use validator for update
-            ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
-            
-            if (!validationResult.isValid()) {
-                System.out.println("=== UPDATE VALIDATION FAILED ===");
-                System.out.println("Errors: " + validationResult.getAllErrorMessages());
-                
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
-                    .build();
-            }
-
-            boolean updated = customerService.updateCustomer(customerId, customer);
-            if (updated) {
-                return Response.ok(ApiResponse.success("Customer updated successfully")).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Customer not found or update failed"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
                 .build();
         }
+
+        boolean updated = customerService.updateCustomer(customerId, customer);
+        if (updated) {
+            return Response.ok(ApiResponse.success("Customer updated successfully")).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(ApiResponse.error("Customer not found or update failed"))
+                .build();
+        }
+    } catch (Exception e) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+            .build();
     }
+}
 
     @DELETE
     @Path("/{customer_id}")

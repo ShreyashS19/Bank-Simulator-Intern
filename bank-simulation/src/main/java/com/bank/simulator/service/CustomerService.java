@@ -13,14 +13,14 @@ public interface CustomerService {
     List<Customer> getAllCustomers();
     
     // Validation methods
-    boolean isPhoneNumberValid(String phoneNumber);
+   // boolean isPhoneNumberValid(String phoneNumber);
     boolean isPhoneNumberExists(String phoneNumber);
-    boolean isEmailValid(String email);
+ //   boolean isEmailValid(String email);
     boolean isEmailExists(String email);
     boolean isAadharNumberExists(String aadharNumber);
-    boolean isAadharValid(String aadhar);
-    boolean isPinValid(String pin);
-    boolean isAgeValid(LocalDate dob);
+    // boolean isAadharValid(String aadhar);
+    // boolean isPinValid(String pin);
+    // boolean isAgeValid(LocalDate dob);
     
     // ID generation
     String generateCustomerId();

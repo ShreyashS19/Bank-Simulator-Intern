@@ -13,12 +13,12 @@ public interface AccountService {
     
     // Validation and utility methods
     boolean isAccountNumberExists(String accountNumber);
-    boolean isCustomerExists(String customerId);
+   // boolean isCustomerExists(String customerId);
     String getCustomerPhoneNumber(String customerId);
-    boolean isPhoneNumberLinkedToCustomer(String customerId, String phoneNumber);
+    //boolean isPhoneNumberLinkedToCustomer(String customerId, String phoneNumber);
     
     // Debug and utility methods
-    void debugPrintAccountDetails(String accountId);
+ //   void debugPrintAccountDetails(String accountId);
     
     // ID generation
     String generateAccountId();

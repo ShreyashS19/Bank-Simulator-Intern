@@ -39,7 +39,7 @@ public class DBConfig {
         return DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
     }
 
-    public static void testConnection() throws SQLException {
+    public static void testConnection() throws SQLException {   
         try (Connection conn = getConnection()) {
             System.out.println("Database connection successful!");
         }

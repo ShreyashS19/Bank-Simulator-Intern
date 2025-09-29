@@ -22,9 +22,6 @@ public class CustomerValidator {
     private static final Pattern AADHAR_PATTERN = 
         Pattern.compile("^[0-9]{12}$");
 
-    /**
-     * Main validation method for customer creation
-     */
     public ValidationResult validateCustomerForCreation(Customer customer) {
         System.out.println("=== CUSTOMER CREATION VALIDATION STARTED ===");
         System.out.println("Customer Name: " + customer.getName());
@@ -33,7 +30,6 @@ public class CustomerValidator {
         
         ValidationResult result = new ValidationResult();
         
-        // Basic field validations
         ValidationResult nameValidation = validateName(customer.getName());
         if (!nameValidation.isValid()) {
             result.addError(nameValidation.getFirstErrorMessage());
@@ -69,7 +65,6 @@ public class CustomerValidator {
             result.addError(dobValidation.getFirstErrorMessage());
         }
         
-        // Database uniqueness validations (only if basic validations pass)
         if (result.isValid()) {
             System.out.println("=== BASIC VALIDATIONS PASSED - CHECKING UNIQUENESS ===");
             
@@ -98,176 +93,150 @@ public class CustomerValidator {
         return result;
     }
 
-    /**
-     * Validation for customer updates
-     */
-    /**
- * Main validation method for customer updates
- */
-public ValidationResult validateCustomerForUpdate(String customerId, Customer customer) {
-    System.out.println("=== CUSTOMER UPDATE VALIDATION STARTED ===");
-    System.out.println("Customer ID: " + customerId);
-    System.out.println("Customer Name: " + customer.getName());
-    System.out.println("Phone Number: " + customer.getPhoneNumber());
-    System.out.println("Email: " + customer.getEmail());
-    
-    ValidationResult result = new ValidationResult();
-    
-    // Basic field validations
-    ValidationResult nameValidation = validateName(customer.getName());
-    if (!nameValidation.isValid()) {
-        result.addError(nameValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult phoneValidation = validatePhoneNumberFormat(customer.getPhoneNumber());
-    if (!phoneValidation.isValid()) {
-        result.addError(phoneValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult emailValidation = validateEmail(customer.getEmail());
-    if (!emailValidation.isValid()) {
-        result.addError(emailValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult addressValidation = validateAddress(customer.getAddress());
-    if (!addressValidation.isValid()) {
-        result.addError(addressValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult customerPinValidation = validateCustomerPin(customer.getCustomerPin());
-    if (!customerPinValidation.isValid()) {
-        result.addError(customerPinValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult aadharValidation = validateAadharNumberFormat(customer.getAadharNumber());
-    if (!aadharValidation.isValid()) {
-        result.addError(aadharValidation.getFirstErrorMessage());
-    }
-    
-    ValidationResult dobValidation = validateDateOfBirth(customer.getDob());
-    if (!dobValidation.isValid()) {
-        result.addError(dobValidation.getFirstErrorMessage());
-    }
-    
-    // Database-dependent validations - EXCLUDE current customer from checks
-    if (result.isValid()) {
-        System.out.println("=== BASIC VALIDATIONS PASSED - CHECKING UNIQUENESS (EXCLUDING CURRENT CUSTOMER) ===");
+    public ValidationResult validateCustomerForUpdate(String customerId, Customer customer) {
+        System.out.println("=== CUSTOMER UPDATE VALIDATION STARTED ===");
+        System.out.println("Customer ID: " + customerId);
+        System.out.println("Customer Name: " + customer.getName());
+        System.out.println("Phone Number: " + customer.getPhoneNumber());
+        System.out.println("Email: " + customer.getEmail());
         
-        // Check phone uniqueness (exclude current customer)
-        ValidationResult phoneUniqueValidation = validatePhoneNumberUniqueForUpdate(customerId, customer.getPhoneNumber());
-        if (!phoneUniqueValidation.isValid()) {
-            result.addError(phoneUniqueValidation.getFirstErrorMessage());
+        ValidationResult result = new ValidationResult();
+        
+        ValidationResult nameValidation = validateName(customer.getName());
+        if (!nameValidation.isValid()) {
+            result.addError(nameValidation.getFirstErrorMessage());
         }
         
-        // Check email uniqueness (exclude current customer)
-        ValidationResult emailUniqueValidation = validateEmailUniqueForUpdate(customerId, customer.getEmail());
-        if (!emailUniqueValidation.isValid()) {
-            result.addError(emailUniqueValidation.getFirstErrorMessage());
+        ValidationResult phoneValidation = validatePhoneNumberFormat(customer.getPhoneNumber());
+        if (!phoneValidation.isValid()) {
+            result.addError(phoneValidation.getFirstErrorMessage());
         }
         
-        // Check aadhar uniqueness (exclude current customer)
-        ValidationResult aadharUniqueValidation = validateAadharNumberUniqueForUpdate(customerId, customer.getAadharNumber());
-        if (!aadharUniqueValidation.isValid()) {
-            result.addError(aadharUniqueValidation.getFirstErrorMessage());
+        ValidationResult emailValidation = validateEmail(customer.getEmail());
+        if (!emailValidation.isValid()) {
+            result.addError(emailValidation.getFirstErrorMessage());
         }
+        
+        ValidationResult addressValidation = validateAddress(customer.getAddress());
+        if (!addressValidation.isValid()) {
+            result.addError(addressValidation.getFirstErrorMessage());
+        }
+        
+        ValidationResult customerPinValidation = validateCustomerPin(customer.getCustomerPin());
+        if (!customerPinValidation.isValid()) {
+            result.addError(customerPinValidation.getFirstErrorMessage());
+        }
+        
+        ValidationResult aadharValidation = validateAadharNumberFormat(customer.getAadharNumber());
+        if (!aadharValidation.isValid()) {
+            result.addError(aadharValidation.getFirstErrorMessage());
+        }
+        
+        ValidationResult dobValidation = validateDateOfBirth(customer.getDob());
+        if (!dobValidation.isValid()) {
+            result.addError(dobValidation.getFirstErrorMessage());
+        }
+        
+        if (result.isValid()) {
+            System.out.println("=== BASIC VALIDATIONS PASSED - CHECKING UNIQUENESS (EXCLUDING CURRENT CUSTOMER) ===");
+            
+            ValidationResult phoneUniqueValidation = validatePhoneNumberUniqueForUpdate(customerId, customer.getPhoneNumber());
+            if (!phoneUniqueValidation.isValid()) {
+                result.addError(phoneUniqueValidation.getFirstErrorMessage());
+            }
+            
+            ValidationResult emailUniqueValidation = validateEmailUniqueForUpdate(customerId, customer.getEmail());
+            if (!emailUniqueValidation.isValid()) {
+                result.addError(emailUniqueValidation.getFirstErrorMessage());
+            }
+            
+            ValidationResult aadharUniqueValidation = validateAadharNumberUniqueForUpdate(customerId, customer.getAadharNumber());
+            if (!aadharUniqueValidation.isValid()) {
+                result.addError(aadharUniqueValidation.getFirstErrorMessage());
+            }
+        }
+        
+        System.out.println("=== CUSTOMER UPDATE VALIDATION RESULT ===");
+        System.out.println("Valid: " + result.isValid());
+        if (!result.isValid()) {
+            System.out.println("Errors: " + result.getAllErrorMessages());
+        }
+        
+        return result;
     }
-    
-    System.out.println("=== CUSTOMER UPDATE VALIDATION RESULT ===");
-    System.out.println("Valid: " + result.isValid());
-    if (!result.isValid()) {
-        System.out.println("Errors: " + result.getAllErrorMessages());
-    }
-    
-    return result;
-}
 
-/**
- * Check phone number uniqueness for updates (exclude current customer)
- */
-public ValidationResult validatePhoneNumberUniqueForUpdate(String customerId, String phoneNumber) {
-    String query = "SELECT COUNT(*) FROM Customer WHERE phone_number = ? AND customer_id != ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    public ValidationResult validatePhoneNumberUniqueForUpdate(String customerId, String phoneNumber) {
+        String query = "SELECT COUNT(*) FROM Customer WHERE phone_number = ? AND customer_id != ?";
         
-        stmt.setString(1, phoneNumber);
-        stmt.setString(2, customerId);
-        ResultSet rs = stmt.executeQuery();
-        
-        if (rs.next() && rs.getInt(1) > 0) {
-            System.out.println("=== PHONE NUMBER ALREADY EXISTS (OTHER CUSTOMER) ===");
-            System.out.println("Phone: " + phoneNumber);
-            return ValidationResult.failure("Phone number already exists");
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, phoneNumber);
+            stmt.setString(2, customerId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                System.out.println("=== PHONE NUMBER ALREADY EXISTS (OTHER CUSTOMER) ===");
+                System.out.println("Phone: " + phoneNumber);
+                return ValidationResult.failure("Phone number already exists");
+            }
+            
+            System.out.println("✓ Phone number is unique for update: " + phoneNumber);
+            return ValidationResult.success();
+        } catch (SQLException e) {
+            System.err.println("Error checking phone uniqueness for update: " + e.getMessage());
+            return ValidationResult.failure("Database error while checking phone number");
         }
-        
-        System.out.println("✓ Phone number is unique for update: " + phoneNumber);
-        return ValidationResult.success();
-        
-    } catch (SQLException e) {
-        System.err.println("Error checking phone uniqueness for update: " + e.getMessage());
-        return ValidationResult.failure("Database error while checking phone number");
     }
-}
 
-/**
- * Check email uniqueness for updates (exclude current customer)
- */
-public ValidationResult validateEmailUniqueForUpdate(String customerId, String email) {
-    String query = "SELECT COUNT(*) FROM Customer WHERE email = ? AND customer_id != ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    public ValidationResult validateEmailUniqueForUpdate(String customerId, String email) {
+        String query = "SELECT COUNT(*) FROM Customer WHERE email = ? AND customer_id != ?";
         
-        stmt.setString(1, email);
-        stmt.setString(2, customerId);
-        ResultSet rs = stmt.executeQuery();
-        
-        if (rs.next() && rs.getInt(1) > 0) {
-            System.out.println("=== EMAIL ALREADY EXISTS (OTHER CUSTOMER) ===");
-            System.out.println("Email: " + email);
-            return ValidationResult.failure("Email already exists");
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, email);
+            stmt.setString(2, customerId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                System.out.println("=== EMAIL ALREADY EXISTS (OTHER CUSTOMER) ===");
+                System.out.println("Email: " + email);
+                return ValidationResult.failure("Email already exists");
+            }
+            
+            System.out.println("✓ Email is unique for update: " + email);
+            return ValidationResult.success();
+        } catch (SQLException e) {
+            System.err.println("Error checking email uniqueness for update: " + e.getMessage());
+            return ValidationResult.failure("Database error while checking email");
         }
-        
-        System.out.println("✓ Email is unique for update: " + email);
-        return ValidationResult.success();
-        
-    } catch (SQLException e) {
-        System.err.println("Error checking email uniqueness for update: " + e.getMessage());
-        return ValidationResult.failure("Database error while checking email");
     }
-}
 
-/**
- * Check aadhar number uniqueness for updates (exclude current customer)
- */
-public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, String aadharNumber) {
-    String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ? AND customer_id != ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, String aadharNumber) {
+        String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ? AND customer_id != ?";
         
-        stmt.setString(1, aadharNumber);
-        stmt.setString(2, customerId);
-        ResultSet rs = stmt.executeQuery();
-        
-        if (rs.next() && rs.getInt(1) > 0) {
-            System.out.println("=== AADHAR NUMBER ALREADY EXISTS (OTHER CUSTOMER) ===");
-            System.out.println("Aadhar: " + aadharNumber);
-            return ValidationResult.failure("Aadhar number already exists");
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, aadharNumber);
+            stmt.setString(2, customerId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                System.out.println("=== AADHAR NUMBER ALREADY EXISTS (OTHER CUSTOMER) ===");
+                System.out.println("Aadhar: " + aadharNumber);
+                return ValidationResult.failure("Aadhar number already exists");
+            }
+            
+            System.out.println("✓ Aadhar number is unique for update: " + aadharNumber);
+            return ValidationResult.success();
+        } catch (SQLException e) {
+            System.err.println("Error checking aadhar uniqueness for update: " + e.getMessage());
+            return ValidationResult.failure("Database error while checking aadhar number");
         }
-        
-        System.out.println("✓ Aadhar number is unique for update: " + aadharNumber);
-        return ValidationResult.success();
-        
-    } catch (SQLException e) {
-        System.err.println("Error checking aadhar uniqueness for update: " + e.getMessage());
-        return ValidationResult.failure("Database error while checking aadhar number");
     }
-}
 
-    /**
-     * Validate customer name
-     */
     public ValidationResult validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return ValidationResult.failure("Customer name is required");
@@ -288,9 +257,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate phone number format (based on your existing logic)
-     */
     public ValidationResult validatePhoneNumberFormat(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
             return ValidationResult.failure("Phone number is required");
@@ -313,9 +279,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate email format
-     */
     public ValidationResult validateEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return ValidationResult.failure("Email is required");
@@ -332,9 +295,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate address
-     */
     public ValidationResult validateAddress(String address) {
         if (address == null || address.trim().isEmpty()) {
             return ValidationResult.failure("Address is required");
@@ -351,9 +311,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate customer PIN
-     */
     public ValidationResult validateCustomerPin(String pin) {
         if (pin == null || pin.trim().isEmpty()) {
             return ValidationResult.failure("Customer PIN is required");
@@ -366,9 +323,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate Aadhar number format
-     */
     public ValidationResult validateAadharNumberFormat(String aadhar) {
         if (aadhar == null || aadhar.trim().isEmpty()) {
             return ValidationResult.failure("Aadhar number is required");
@@ -387,9 +341,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Validate date of birth
-     */
     public ValidationResult validateDateOfBirth(LocalDate dob) {
         if (dob == null) {
             return ValidationResult.failure("Date of birth is required");
@@ -414,9 +365,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Check phone number uniqueness in database
-     */
     public ValidationResult validatePhoneNumberUniqueness(String phoneNumber) {
         String query = "SELECT COUNT(*) FROM Customer WHERE phone_number = ?";
         
@@ -431,7 +379,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
                 System.out.println("Phone: " + phoneNumber);
                 return ValidationResult.failure("Phone number already exists");
             }
-            
         } catch (SQLException e) {
             System.err.println("Error checking phone number uniqueness: " + e.getMessage());
             return ValidationResult.failure("Database error while checking phone uniqueness");
@@ -440,9 +387,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Check email uniqueness in database
-     */
     public ValidationResult validateEmailUniqueness(String email) {
         String query = "SELECT COUNT(*) FROM Customer WHERE email = ?";
         
@@ -457,7 +401,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
                 System.out.println("Email: " + email);
                 return ValidationResult.failure("Email already exists");
             }
-            
         } catch (SQLException e) {
             System.err.println("Error checking email uniqueness: " + e.getMessage());
             return ValidationResult.failure("Database error while checking email uniqueness");
@@ -466,9 +409,6 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
         return ValidationResult.success();
     }
 
-    /**
-     * Check Aadhar number uniqueness in database
-     */
     public ValidationResult validateAadharNumberUniqueness(String aadharNumber) {
         String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ?";
         
@@ -483,32 +423,11 @@ public ValidationResult validateAadharNumberUniqueForUpdate(String customerId, S
                 System.out.println("Aadhar: " + aadharNumber);
                 return ValidationResult.failure("Aadhar number already exists");
             }
-            
         } catch (SQLException e) {
             System.err.println("Error checking Aadhar uniqueness: " + e.getMessage());
             return ValidationResult.failure("Database error while checking Aadhar uniqueness");
         }
         
         return ValidationResult.success();
-    }
-
-    /**
-     * Check if customer exists
-     */
-    private boolean customerExists(String customerId) {
-        String query = "SELECT COUNT(*) FROM Customer WHERE customer_id = ?";
-        
-        try (Connection conn = DBConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-            stmt.setString(1, customerId);
-            ResultSet rs = stmt.executeQuery();
-            
-            return rs.next() && rs.getInt(1) > 0;
-            
-        } catch (SQLException e) {
-            System.err.println("Error checking customer existence: " + e.getMessage());
-            return false;
-        }
     }
 }

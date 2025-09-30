@@ -11,10 +11,10 @@ public class Account {
     private String aadharNumber;
     private String ifscCode;
     private String phoneNumberLinked;
-    private BigDecimal amount = BigDecimal.valueOf(600.00);  // Default 600
+    private BigDecimal amount = BigDecimal.valueOf(600.00);  
     private String bankName;
     private String nameOnAccount;
-    private String status = "ACTIVE";  // Default ACTIVE
+    private String status = "ACTIVE";  
     
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime created;
@@ -22,10 +22,9 @@ public class Account {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime modified;
 
-    // Default constructor
+    
     public Account() {}
 
-    // Full constructor
     public Account(String accountId, String customerId, String accountNumber, String aadharNumber,
                    String ifscCode, String phoneNumberLinked, BigDecimal amount, String bankName,
                    String nameOnAccount, String status, LocalDateTime created, LocalDateTime modified) {
@@ -43,7 +42,7 @@ public class Account {
         this.modified = modified;
     }
 
-    // Getters and Setters
+
     public String getAccountId() { return accountId; }
     public void setAccountId(String accountId) { this.accountId = accountId; }
 
@@ -72,7 +71,6 @@ public class Account {
     //     }
     // }
     public void setAmount(BigDecimal amount) {
-    // Just set the amount as provided - don't modify it
     this.amount = amount;
 }
 

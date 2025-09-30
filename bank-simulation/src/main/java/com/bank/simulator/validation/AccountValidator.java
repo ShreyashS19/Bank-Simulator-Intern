@@ -16,9 +16,7 @@ public class AccountValidator {
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[1-9][0-9]{9}$");
     private static final Pattern AADHAR_PATTERN = Pattern.compile("^[0-9]{12}$");
 
-    /**
-     * Main validation method for account creation (with auto-generated customerId)
-     */
+    
     public ValidationResult validateAccountForCreation(Account account) {
         System.out.println("=== ACCOUNT CREATION VALIDATION STARTED ===");
         System.out.println("Aadhar Number: " + account.getAadharNumber());
@@ -27,9 +25,6 @@ public class AccountValidator {
         
         ValidationResult result = new ValidationResult();
         
-        // Skip customer ID validation since it's auto-generated
-        
-        // Required field validations
         if (account.getAccountNumber() == null || account.getAccountNumber().trim().isEmpty()) {
             System.err.println("Error: Required field missing (account number)");
             result.addError("Account number is required");
@@ -55,7 +50,6 @@ public class AccountValidator {
             result.addError("Name on account is required");
         }
         
-        // Format validations
         ValidationResult accountNumberValidation = validateAccountNumber(account.getAccountNumber());
         if (!accountNumberValidation.isValid()) {
             System.err.println("Error: Invalid account number format");
@@ -92,18 +86,15 @@ public class AccountValidator {
             result.addError(nameOnAccountValidation.getFirstErrorMessage());
         }
         
-        // Database validations
         if (result.isValid()) {
             System.out.println("=== BASIC VALIDATIONS PASSED - CHECKING DATABASE CONSTRAINTS ===");
             
-            // Check if aadhar exists in Customer Module
             ValidationResult aadharExistsValidation = validateAadharExistsInCustomer(account.getAadharNumber());
             if (!aadharExistsValidation.isValid()) {
                 System.err.println("Error: Aadhar number not found");
                 result.addError("Aadhar number is not linked with any customer", "AADHAR_NOT_FOUND");
             }
             
-            // Check account number uniqueness
             ValidationResult accountNumberUniqueValidation = validateAccountNumberUniqueness(account.getAccountNumber());
             if (!accountNumberUniqueValidation.isValid()) {
                 System.err.println("Error: Duplicate account creation attempted");
@@ -121,9 +112,6 @@ public class AccountValidator {
         return result;
     }
 
-    /**
-     * Validation for account updates - Same strict validation as creation
-     */
     public ValidationResult validateAccountForUpdate(String accountId, Account account) {
         System.out.println("=== ACCOUNT UPDATE VALIDATION STARTED ===");
         System.out.println("Account ID: " + accountId);
@@ -133,13 +121,11 @@ public class AccountValidator {
         
         ValidationResult result = new ValidationResult();
         
-        // Check if account exists first
         if (!accountExists(accountId)) {
             result.addError("Account not found with ID: " + accountId);
             return result;
         }
         
-        // Required field validations (SAME AS CREATION)
         if (account.getAccountNumber() == null || account.getAccountNumber().trim().isEmpty()) {
             System.err.println("Error: Required field missing (account number)");
             result.addError("Account number is required");
@@ -165,7 +151,6 @@ public class AccountValidator {
             result.addError("Name on account is required");
         }
         
-        // Format validations (SAME AS CREATION - STRICT VALIDATION)
         ValidationResult accountNumberValidation = validateAccountNumber(account.getAccountNumber());
         if (!accountNumberValidation.isValid()) {
             System.err.println("Error: Invalid account number format");
@@ -202,18 +187,15 @@ public class AccountValidator {
             result.addError(nameOnAccountValidation.getFirstErrorMessage());
         }
         
-        // Database validations (SAME AS CREATION, except account number uniqueness)
         if (result.isValid()) {
             System.out.println("=== BASIC UPDATE VALIDATIONS PASSED - CHECKING DATABASE CONSTRAINTS ===");
             
-            // Check if aadhar exists in Customer Module
             ValidationResult aadharExistsValidation = validateAadharExistsInCustomer(account.getAadharNumber());
             if (!aadharExistsValidation.isValid()) {
                 System.err.println("Error: Aadhar number not found for update");
                 result.addError("Aadhar number is not linked with any customer", "AADHAR_NOT_FOUND");
             }
             
-            // Check account number uniqueness for updates (exclude current account)
             ValidationResult accountNumberUniqueValidation = validateAccountNumberUniquenessForUpdate(accountId, account.getAccountNumber());
             if (!accountNumberUniqueValidation.isValid()) {
                 System.err.println("Error: Duplicate account number in update");
@@ -231,9 +213,6 @@ public class AccountValidator {
         return result;
     }
 
-    /**
-     * Check if aadhar number exists in Customer table
-     */
     public ValidationResult validateAadharExistsInCustomer(String aadharNumber) {
         String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ?";
         
@@ -257,9 +236,6 @@ public class AccountValidator {
         }
     }
 
-    /**
-     * Validate account number
-     */
     public ValidationResult validateAccountNumber(String accountNumber) {
         if (accountNumber == null || accountNumber.trim().isEmpty()) {
             return ValidationResult.failure("Account number is required");
@@ -272,9 +248,6 @@ public class AccountValidator {
         return ValidationResult.success();
     }
 
-    /**
-     * Validate Aadhar number (12 digits)
-     */
     public ValidationResult validateAadharNumber(String aadharNumber) {
         if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
             return ValidationResult.failure("Aadhar number is required");
@@ -293,9 +266,6 @@ public class AccountValidator {
         return ValidationResult.success();
     }
 
-    /**
-     * Validate IFSC code (11 characters)
-     */
     public ValidationResult validateIfscCode(String ifscCode) {
         if (ifscCode == null || ifscCode.trim().isEmpty()) {
             return ValidationResult.failure("IFSC code is required");
@@ -312,9 +282,6 @@ public class AccountValidator {
         return ValidationResult.success();
     }
 
-    /**
-     * Validate amount (minimum balance of 600)
-     */
     public ValidationResult validateAmount(BigDecimal amount) {
         System.out.println("=== AMOUNT VALIDATION DEBUG ===");
         System.out.println("Amount received: " + amount);
@@ -322,7 +289,7 @@ public class AccountValidator {
         
         if (amount == null) {
             System.out.println("Amount is null - will be set to default 600 after validation");
-            return ValidationResult.success(); // Allow null - will be set to default later
+            return ValidationResult.success(); 
         }
         
         System.out.println("Comparing amount " + amount + " with minimum 600");
@@ -332,23 +299,21 @@ public class AccountValidator {
         System.out.println("Comparison result: " + comparison + " (negative means amount < 600)");
         
         if (comparison < 0) {
-            System.out.println("❌ VALIDATION FAILED - Amount " + amount + " is less than minimum " + minimumBalance);
+            System.out.println(" VALIDATION FAILED - Amount " + amount + " is less than minimum " + minimumBalance);
             System.err.println("Error: Amount below minimum balance");
             return ValidationResult.failure("Amount must have a minimum balance of 600");
         }
         
         if (amount.scale() > 2) {
-            System.out.println("❌ VALIDATION FAILED - Amount has more than 2 decimal places");
+            System.out.println(" VALIDATION FAILED - Amount has more than 2 decimal places");
             return ValidationResult.failure("Amount cannot have more than 2 decimal places");
         }
         
-        System.out.println("✅ Amount validation passed: " + amount);
+        System.out.println(" Amount validation passed: " + amount);
         return ValidationResult.success();
     }
 
-    /**
-     * Validate bank name
-     */
+   
     public ValidationResult validateBankName(String bankName) {
         if (bankName == null || bankName.trim().isEmpty()) {
             return ValidationResult.failure("Bank name is required");
@@ -365,9 +330,7 @@ public class AccountValidator {
         return ValidationResult.success();
     }
 
-    /**
-     * Validate name on account
-     */
+    
     public ValidationResult validateNameOnAccount(String nameOnAccount) {
         if (nameOnAccount == null || nameOnAccount.trim().isEmpty()) {
             return ValidationResult.failure("Name on account is required");
@@ -384,9 +347,7 @@ public class AccountValidator {
         return ValidationResult.success();
     }
 
-    /**
-     * Check account number uniqueness for creation
-     */
+ 
     public ValidationResult validateAccountNumberUniqueness(String accountNumber) {
         String query = "SELECT COUNT(*) FROM Account WHERE account_number = ?";
         
@@ -411,9 +372,7 @@ public class AccountValidator {
         }
     }
 
-    /**
-     * Check account number uniqueness for updates (exclude current account)
-     */
+    
     public ValidationResult validateAccountNumberUniquenessForUpdate(String currentAccountId, String accountNumber) {
         String query = "SELECT COUNT(*) FROM Account WHERE account_number = ? AND account_id != ?";
         
@@ -430,7 +389,7 @@ public class AccountValidator {
                 return ValidationResult.failure("Account number already exists with another account");
             }
             
-            System.out.println("✓ Account number is unique for update: " + accountNumber);
+            System.out.println(" Account number is unique for update: " + accountNumber);
             return ValidationResult.success();
             
         } catch (SQLException e) {
@@ -439,9 +398,6 @@ public class AccountValidator {
         }
     }
 
-    /**
-     * Check if account exists
-     */
     private boolean accountExists(String accountId) {
         String query = "SELECT COUNT(*) FROM Account WHERE account_id = ?";
         

@@ -2,7 +2,7 @@ package com.bank.simulator.controller;
 
 import com.bank.simulator.model.ApiResponse;
 import com.bank.simulator.model.Customer;
-import com.bank.simulator.service.CustomerService;  // Use interface
+import com.bank.simulator.service.CustomerService; 
 import com.bank.simulator.service.impl.CustomerServiceImpl;
 import com.bank.simulator.validation.CustomerValidator;
 import com.bank.simulator.validation.ValidationResult;
@@ -17,7 +17,6 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class CustomerController {
     
-    // Use interface reference for better design
     private final CustomerService customerService = new CustomerServiceImpl();
     private final CustomerValidator customerValidator = new CustomerValidator();
 
@@ -27,7 +26,6 @@ public class CustomerController {
         try {
             System.out.println("=== CUSTOMER CREATION REQUEST ===");
             
-            // Use validator
             ValidationResult validationResult = customerValidator.validateCustomerForCreation(customer);
             
             if (!validationResult.isValid()) {
@@ -39,7 +37,6 @@ public class CustomerController {
                     .build();
             }
 
-            // Set default status if not provided
             if (customer.getStatus() == null || customer.getStatus().trim().isEmpty()) {
                 customer.setStatus("Inactive");
             }
@@ -63,7 +60,6 @@ public class CustomerController {
         }
     }
 
-    // ... rest of the methods remain the same
     @GET
     @Path("/{customer_id}")
     public Response getCustomer(@PathParam("customer_id") String customerId) {
@@ -89,7 +85,6 @@ public Response updateCustomer(@PathParam("customer_id") String customerId, Cust
     try {
         System.out.println("=== CUSTOMER UPDATE REQUEST ===");
         
-        // Use UPDATE validation method, not creation validation
         ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
         
         if (!validationResult.isValid()) {

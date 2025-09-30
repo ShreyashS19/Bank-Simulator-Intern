@@ -37,7 +37,6 @@ public class AccountController {
                     .build();
             }
             
-            // Set defaults only after validation passes
             if (account.getAmount() == null) {
                 account.setAmount(BigDecimal.valueOf(600.00));
             }
@@ -164,6 +163,66 @@ public class AccountController {
         }
     }
 
+
+
+    @DELETE
+    @Path("/number/{account_number}")
+    public Response deleteByNumber(@PathParam("account_number") String number) {
+        try {
+            Account acc = accountService.getAccountByAccountNumber(number);
+            if (acc == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                               .entity(ApiResponse.error("Account not found"))
+                               .build();
+            }
+            boolean ok = accountService.deleteAccount(acc.getAccountId());
+            return ok
+                   ? Response.ok(ApiResponse.success("Account deleted")).build()
+                   : Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                             .entity(ApiResponse.error("Deletion failed")).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(ApiResponse.error("Internal error: " + e.getMessage()))
+                           .build();
+        }
+    }
+     
+    @PUT
+    @Path("/number/{account_number}")
+    public Response updateByAccountNumber(@PathParam("account_number") String accountNumber, Account account) {
+        try {
+            Account existingAccount = accountService.getAccountByAccountNumber(accountNumber);
+            if (existingAccount == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Account not found"))
+                    .build();
+            }
+            
+            String accountId = existingAccount.getAccountId();
+            ValidationResult validationResult = accountValidator.validateAccountForUpdate(accountId, account);
+            
+            if (!validationResult.isValid()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
+                    .build();
+            }
+
+            boolean updated = accountService.updateAccount(accountId, account);
+            if (updated) {
+                return Response.ok(ApiResponse.success("Account updated successfully")).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Account not found or update failed"))
+                    .build();
+            }
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
+        }
+    }
+    
     @DELETE
     @Path("/{account_id}")
     public Response deleteAccount(@PathParam("account_id") String accountId) {

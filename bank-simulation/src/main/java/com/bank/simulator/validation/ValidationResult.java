@@ -49,7 +49,6 @@ public class ValidationResult {
         return new ValidationResult(false, errorMessage, errorCode);
     }
     
-    // Getters and Setters
     public boolean isValid() { return valid; }
     public void setValid(boolean valid) { this.valid = valid; }
     

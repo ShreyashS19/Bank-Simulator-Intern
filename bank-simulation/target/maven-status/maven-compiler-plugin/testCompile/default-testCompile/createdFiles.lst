@@ -1,0 +1,6 @@
+com\bank\simulator\validation\AccountValidatorTest.class
+com\bank\simulator\validation\CustomerValidatorTest.class
+com\bank\simulator\controller\AccountControllerTest.class
+com\bank\simulator\service\impl\CustomerServiceImplTest.class
+com\bank\simulator\controller\CustomerControllerTest.class
+com\bank\simulator\service\impl\AccountServiceImplTest.class

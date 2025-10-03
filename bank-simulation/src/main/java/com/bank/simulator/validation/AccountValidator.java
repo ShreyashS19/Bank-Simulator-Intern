@@ -15,6 +15,7 @@ public class AccountValidator {
     private static final Pattern IFSC_PATTERN = Pattern.compile("^[A-Z]{4}0[A-Z0-9]{6}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[1-9][0-9]{9}$");
     private static final Pattern AADHAR_PATTERN = Pattern.compile("^[0-9]{12}$");
+    private static final Pattern ACCOUNT_NUMBER_PATTERN = Pattern.compile("^[0-9]{10,25}$");
 
     
     public ValidationResult validateAccountForCreation(Account account) {
@@ -236,18 +237,64 @@ public class AccountValidator {
         }
     }
 
-    public ValidationResult validateAccountNumber(String accountNumber) {
-        if (accountNumber == null || accountNumber.trim().isEmpty()) {
-            return ValidationResult.failure("Account number is required");
-        }
+    // public ValidationResult validateAccountNumber(String accountNumber) {
+    //     if (accountNumber == null || accountNumber.trim().isEmpty()) {
+    //         return ValidationResult.failure("Account number is required");
+    //     }
         
-        if (accountNumber.length() < 10 || accountNumber.length() > 25) {
-            return ValidationResult.failure("Account number must be between 10-25 characters");
-        }
+    //     if (accountNumber.length() < 10 || accountNumber.length() > 25) {
+    //         return ValidationResult.failure("Account number must be between 10-25 characters");
+    //     }
         
-        return ValidationResult.success();
+    //     return ValidationResult.success();
+    // }
+public ValidationResult validateAccountNumber(String accountNumber) {
+    if (accountNumber == null || accountNumber.trim().isEmpty()) {
+        return ValidationResult.failure("Account number is required");
     }
+    
+    accountNumber = accountNumber.trim();
+    
+    if (!ACCOUNT_NUMBER_PATTERN.matcher(accountNumber).matches()) {
+        return ValidationResult.failure("Account number must be 10-25 digits and contain only numbers (0-9). No letters, spaces, or special characters allowed.");
+    }
+    
+    return ValidationResult.success();
+}
 
+   
+public ValidationResult validateAccountNumberFormat(String accountNumber) {
+    if (accountNumber == null || accountNumber.trim().isEmpty()) {
+        return ValidationResult.failure("Account number is required");
+    }
+    
+    accountNumber = accountNumber.trim();
+    
+    // Check for invalid characters first
+    if (accountNumber.contains(" ")) {
+        return ValidationResult.failure("Account number cannot contain spaces. Please enter digits only.");
+    }
+    
+    if (accountNumber.matches(".*[a-zA-Z].*")) {
+        return ValidationResult.failure("Account number cannot contain letters. Please enter digits only.");
+    }
+    
+    if (accountNumber.matches(".*[^0-9].*")) {
+        return ValidationResult.failure("Account number can only contain numeric digits (0-9). Special characters like '-', '+', '.' are not allowed.");
+    }
+    
+    // Length validation
+    if (accountNumber.length() < 10) {
+        return ValidationResult.failure("Account number is too short. It must be at least 10 digits.");
+    }
+    
+    if (accountNumber.length() > 25) {
+        return ValidationResult.failure("Account number is too long. It cannot exceed 25 digits.");
+    }
+    
+    return ValidationResult.success();
+}
+ 
     public ValidationResult validateAadharNumber(String aadharNumber) {
         if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
             return ValidationResult.failure("Aadhar number is required");
@@ -283,6 +330,7 @@ public class AccountValidator {
     }
 
     public ValidationResult validateAmount(BigDecimal amount) {
+        System.out.println("\n");
         System.out.println("=== AMOUNT VALIDATION DEBUG ===");
         System.out.println("Amount received: " + amount);
         System.out.println("Amount class: " + (amount != null ? amount.getClass() : "null"));

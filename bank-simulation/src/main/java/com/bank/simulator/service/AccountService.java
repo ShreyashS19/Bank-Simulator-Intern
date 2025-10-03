@@ -3,7 +3,7 @@ package com.bank.simulator.service;
 import com.bank.simulator.model.Account;
 
 public interface AccountService {
-    // Core CRUD operations
+   
     String createAccount(Account account);
     Account getAccountById(String accountId);
     Account getAccountByCustomerId(String customerId);
@@ -20,6 +20,6 @@ public interface AccountService {
     // Debug and utility methods
  //   void debugPrintAccountDetails(String accountId);
     
-    // ID generation
+    
     String generateAccountId();
 }

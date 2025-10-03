@@ -29,29 +29,24 @@ public class AccountServiceImpl implements AccountService {
             return customerInfo; // Return error code
         }
         
-        // Set the found/generated customer ID
         account.setCustomerId(customerInfo);
         System.out.println("Auto-linked Customer ID: " + customerInfo);
         
-        // Step 2: Get customer's phone number for linking
         String customerPhone = getCustomerPhoneByCustomerId(customerInfo);
         if (customerPhone == null) {
             System.err.println("Error: Could not retrieve customer phone number");
             return "ERROR_CUSTOMER_PHONE";
         }
         
-        // Step 3: Auto-set phone number linked to customer's phone
         account.setPhoneNumberLinked(customerPhone);
         System.out.println("Auto-linked Phone Number: " + customerPhone);
         
-        // Step 4: Check if account number already exists
         if (isAccountNumberExists(account.getAccountNumber())) {
             System.err.println("Error: Duplicate account creation attempted");
             System.err.println("Account Number: " + account.getAccountNumber() + " already exists");
             return "ACCOUNT_NUMBER_EXISTS";
         }
         
-        // Step 5: Insert account with new structure
         String query = """
             INSERT INTO Account (account_id, customer_id, account_number, aadhar_number, 
                                ifsc_code, phone_number_linked, amount, bank_name, 
@@ -78,7 +73,7 @@ public class AccountServiceImpl implements AccountService {
             int result = stmt.executeUpdate();
             
             if (result > 0) {
-                System.out.println("\n"); // Empty line for readability
+                System.out.println("\n"); 
                 System.out.println("Account created successfully for Customer ID: " + account.getCustomerId());
                 System.out.println("=== ACCOUNT CREATION SUCCESS DETAILS ===");
                 System.out.println("Account ID: " + accountId);
@@ -91,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
                 System.out.println("Name on Account: " + account.getNameOnAccount());
                 System.out.println("IFSC Code: " + account.getIfscCode());
                 System.out.println("=== END ACCOUNT CREATION ===");
-                System.out.println("\n"); // Empty line after success
+                System.out.println("\n"); 
                 return accountId;
             } else {
                 System.err.println("Error: Account creation failed - database insertion returned 0 rows");
@@ -282,14 +277,14 @@ public class AccountServiceImpl implements AccountService {
         System.out.println("New Account Number: " + account.getAccountNumber());
         System.out.println("Aadhar Number: " + account.getAadharNumber());
         
-        // Step 1: Get customer ID based on aadhar number
+        
         String customerId = findCustomerIdByAadhar(account.getAadharNumber());
         if (customerId == null) {
             System.err.println("Error: Customer not found for Aadhar: " + account.getAadharNumber());
             return false;
         }
         
-        // Step 2: Auto-set phone number linked to customer's phone
+
         String customerPhone = getCustomerPhoneByCustomerId(customerId);
         if (customerPhone == null) {
             System.err.println("Error: Could not retrieve customer phone number");
@@ -300,7 +295,6 @@ public class AccountServiceImpl implements AccountService {
         System.out.println("Auto-linked Customer ID: " + customerId);
         System.out.println("Auto-linked Phone Number: " + customerPhone);
         
-        // Step 3: Update account
         String query = """
             UPDATE Account SET account_number = ?, aadhar_number = ?, ifsc_code = ?, phone_number_linked = ?, 
                              amount = ?, bank_name = ?, name_on_account = ?, status = ? 

@@ -122,7 +122,6 @@ class AccountServiceImplTest {
         assertTrue(id1.startsWith("ACC"));
     }
 
-    // Helper methods
     private String simulateCreateAccount(Account account) {
         if (account == null || account.getAccountNumber() == null) return null;
         if (!account.getAccountNumber().matches("^\\d{10,25}$")) return null;

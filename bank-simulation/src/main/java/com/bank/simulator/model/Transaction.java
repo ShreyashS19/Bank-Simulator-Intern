@@ -1,55 +1,104 @@
 package com.bank.simulator.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Transaction {
+    
     private String transactionId;
     private String accountId;
-    private BigDecimal transactionAmount;
-    private String transactionType; // debited/credited
-    private LocalDateTime transactionTime;
-    private String transactionMode; // debit, UPI, credit card
-    private String receiverDetails;
-    private String senderDetails;
+    private String senderAccountNumber;
+    private String receiverAccountNumber;
+    private BigDecimal amount;
+    private String transactionType;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdDate;
 
-    public Transaction() {}
-
-    public Transaction(String transactionId, String accountId, BigDecimal transactionAmount,
-                      String transactionType, LocalDateTime transactionTime, String transactionMode,
-                      String receiverDetails, String senderDetails) {
-        this.transactionId = transactionId;
-        this.accountId = accountId;
-        this.transactionAmount = transactionAmount;
-        this.transactionType = transactionType;
-        this.transactionTime = transactionTime;
-        this.transactionMode = transactionMode;
-        this.receiverDetails = receiverDetails;
-        this.senderDetails = senderDetails;
+    public Transaction() {
+        this.createdDate = LocalDateTime.now();
+        this.transactionType = "ONLINE";
     }
 
-    
-    public String getTransactionId() { return transactionId; }
-    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+    public Transaction(String transactionId, String accountId, String senderAccountNumber, 
+                      String receiverAccountNumber, BigDecimal amount, String transactionType, 
+                      LocalDateTime createdDate) {
+        this.transactionId = transactionId;
+        this.accountId = accountId;
+        this.senderAccountNumber = senderAccountNumber;
+        this.receiverAccountNumber = receiverAccountNumber;
+        this.amount = amount;
+        this.transactionType = transactionType;
+        this.createdDate = createdDate;
+    }
 
-    public String getAccountId() { return accountId; }
-    public void setAccountId(String accountId) { this.accountId = accountId; }
+    public String getTransactionId() {
+        return transactionId;
+    }
 
-    public BigDecimal getTransactionAmount() { return transactionAmount; }
-    public void setTransactionAmount(BigDecimal transactionAmount) { this.transactionAmount = transactionAmount; }
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
 
-    public String getTransactionType() { return transactionType; }
-    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+    public String getAccountId() {
+        return accountId;
+    }
 
-    public LocalDateTime getTransactionTime() { return transactionTime; }
-    public void setTransactionTime(LocalDateTime transactionTime) { this.transactionTime = transactionTime; }
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
 
-    public String getTransactionMode() { return transactionMode; }
-    public void setTransactionMode(String transactionMode) { this.transactionMode = transactionMode; }
+    public String getSenderAccountNumber() {
+        return senderAccountNumber;
+    }
 
-    public String getReceiverDetails() { return receiverDetails; }
-    public void setReceiverDetails(String receiverDetails) { this.receiverDetails = receiverDetails; }
+    public void setSenderAccountNumber(String senderAccountNumber) {
+        this.senderAccountNumber = senderAccountNumber;
+    }
 
-    public String getSenderDetails() { return senderDetails; }
-    public void setSenderDetails(String senderDetails) { this.senderDetails = senderDetails; }
+    public String getReceiverAccountNumber() {
+        return receiverAccountNumber;
+    }
+
+    public void setReceiverAccountNumber(String receiverAccountNumber) {
+        this.receiverAccountNumber = receiverAccountNumber;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "transactionId='" + transactionId + '\'' +
+                ", accountId='" + accountId + '\'' +
+                ", senderAccountNumber='" + senderAccountNumber + '\'' +
+                ", receiverAccountNumber='" + receiverAccountNumber + '\'' +
+                ", amount=" + amount +
+                ", transactionType='" + transactionType + '\'' +
+                ", createdDate=" + createdDate +
+                '}';
+    }
 }

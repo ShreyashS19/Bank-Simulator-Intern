@@ -34,7 +34,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
             throw new SQLException("MySQL JDBC Driver not found", e);
         }
         
-        String dbUrl = "jdbc:mysql://localhost:3306/?useSSL=false&serverTimezone=UTC";
+        String dbUrl = "jdbc:mysql://localhost:3306/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
         String username = "root";
         String password = "Shreyash##18##";
         
@@ -65,7 +65,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 )
             """;
 
-            // NEW ACCOUNT TABLE STRUCTURE ACCORDING TO YOUR REQUIREMENTS
             String accountTable = """
                 CREATE TABLE IF NOT EXISTS Account (
                     account_id VARCHAR(50) PRIMARY KEY,
@@ -88,24 +87,26 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 CREATE TABLE IF NOT EXISTS Transaction (
                     transaction_id VARCHAR(50) PRIMARY KEY,
                     account_id VARCHAR(50) NOT NULL,
-                    transaction_amount DECIMAL(15,2) NOT NULL,
-                    transaction_type ENUM('debited', 'credited') NOT NULL,
-                    transaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    transaction_mode VARCHAR(20) NOT NULL,
-                    receiver_details TEXT,
-                    sender_details TEXT,
+                    sender_account_number VARCHAR(30) NOT NULL,
+                    receiver_account_number VARCHAR(30) NOT NULL,
+                    amount DECIMAL(15,2) NOT NULL,
+                    transaction_type ENUM('ONLINE') NOT NULL DEFAULT 'ONLINE',
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
 
             stmt.executeUpdate(customerTable);
             System.out.println(" -> Table 'Customer' is ready.");
+            
             stmt.executeUpdate(accountTable);
             System.out.println(" -> Table 'Account' is ready with new structure.");
+            
             stmt.executeUpdate(transactionTable);
-            System.out.println(" -> Table 'Transaction' is ready.");
+            System.out.println(" -> Table 'Transaction' is ready with new structure.");
             
             System.out.println("All tables are ready.");
+            
         } catch (SQLException e) {
             System.err.println("!!! ERROR: Could not create tables in the database !!!");
             e.printStackTrace();

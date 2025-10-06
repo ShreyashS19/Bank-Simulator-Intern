@@ -1,4 +1,4 @@
-# Created at 2025-10-04T00:02:54.120
+# Created at 2025-10-07T00:32:46.729
 Boot Manifest-JAR contains absolute paths in classpath 'D:\meeting\without valid\bank-simulation\target\test-classes'
 Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
 'other' has different root

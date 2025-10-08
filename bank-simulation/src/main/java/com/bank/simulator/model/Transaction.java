@@ -1,17 +1,23 @@
 package com.bank.simulator.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Transaction {
     
+    @JsonIgnore
     private String transactionId;
+    
+    @JsonIgnore
     private String accountId;
+    
     private String senderAccountNumber;
     private String receiverAccountNumber;
     private BigDecimal amount;
     private String transactionType;
+    private String description;
     
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdDate;
@@ -23,13 +29,14 @@ public class Transaction {
 
     public Transaction(String transactionId, String accountId, String senderAccountNumber, 
                       String receiverAccountNumber, BigDecimal amount, String transactionType, 
-                      LocalDateTime createdDate) {
+                      String description, LocalDateTime createdDate) {
         this.transactionId = transactionId;
         this.accountId = accountId;
         this.senderAccountNumber = senderAccountNumber;
         this.receiverAccountNumber = receiverAccountNumber;
         this.amount = amount;
         this.transactionType = transactionType;
+        this.description = description;
         this.createdDate = createdDate;
     }
 
@@ -81,6 +88,14 @@ public class Transaction {
         this.transactionType = transactionType;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public LocalDateTime getCreatedDate() {
         return createdDate;
     }
@@ -98,6 +113,7 @@ public class Transaction {
                 ", receiverAccountNumber='" + receiverAccountNumber + '\'' +
                 ", amount=" + amount +
                 ", transactionType='" + transactionType + '\'' +
+                ", description='" + description + '\'' +
                 ", createdDate=" + createdDate +
                 '}';
     }

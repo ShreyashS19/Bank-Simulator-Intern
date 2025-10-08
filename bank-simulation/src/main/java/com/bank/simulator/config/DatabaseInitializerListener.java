@@ -83,7 +83,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 )
             """;
 
-            String transactionTable = """
+                        String transactionTable = """
                 CREATE TABLE IF NOT EXISTS Transaction (
                     transaction_id VARCHAR(50) PRIMARY KEY,
                     account_id VARCHAR(50) NOT NULL,
@@ -91,10 +91,12 @@ public class DatabaseInitializerListener implements ServletContextListener {
                     receiver_account_number VARCHAR(30) NOT NULL,
                     amount DECIMAL(15,2) NOT NULL,
                     transaction_type ENUM('ONLINE') NOT NULL DEFAULT 'ONLINE',
+                    description TEXT,
                     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
+
 
             stmt.executeUpdate(customerTable);
             System.out.println(" -> Table 'Customer' is ready.");

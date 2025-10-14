@@ -137,48 +137,6 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    // @Override
-    // public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
-    //     System.out.println("\n");
-    //     System.out.println("=== FETCHING TRANSACTIONS FOR ACCOUNT NUMBER: " + accountNumber + " ===");
-        
-    //     List<Transaction> transactions = new ArrayList<>();
-        
-    //     String query = "SELECT t.* FROM Account a " +
-    //                   "JOIN Transaction t ON a.account_id = t.account_id " +
-    //                   "WHERE t.sender_account_number = ? OR t.receiver_account_number = ? " +
-    //                   "ORDER BY t.created_date DESC";
-
-    //     try (Connection conn = DBConfig.getConnection();
-    //          PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-    //         stmt.setString(1, accountNumber);
-    //         stmt.setString(2, accountNumber);
-            
-    //         ResultSet rs = stmt.executeQuery();
-            
-    //         while (rs.next()) {
-    //             Transaction transaction = new Transaction();
-    //             transaction.setTransactionId(rs.getString("transaction_id"));
-    //             transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
-    //             transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
-    //             transaction.setAmount(rs.getBigDecimal("amount"));
-    //             transaction.setTransactionType(rs.getString("transaction_type"));
-    //             transaction.setDescription(rs.getString("description"));
-    //             transaction.setCreatedDate(rs.getTimestamp("created_date").toLocalDateTime());
-                
-    //             transactions.add(transaction);
-    //         }
-            
-    //         System.out.println("Found " + transactions.size() + " transactions");
-            
-    //     } catch (SQLException e) {
-    //         System.err.println("Error fetching transactions: " + e.getMessage());
-    //         e.printStackTrace();
-    //     }
-        
-    //     return transactions;
-    // }
 
     @Override
 public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
@@ -202,8 +160,7 @@ public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
         
         while (rs.next()) {
             Transaction transaction = new Transaction();
-            // DO NOT SET transactionId - removed
-            // DO NOT SET accountId - removed
+            
             transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
             transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
             transaction.setAmount(rs.getBigDecimal("amount"));

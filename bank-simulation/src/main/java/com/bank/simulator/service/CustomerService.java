@@ -12,6 +12,7 @@ public interface CustomerService {
     boolean deleteCustomer(String customerId);
     List<Customer> getAllCustomers();
     
+    
     // Validation methods
    // boolean isPhoneNumberValid(String phoneNumber);
     boolean isPhoneNumberExists(String phoneNumber);
@@ -24,4 +25,7 @@ public interface CustomerService {
     
     // ID generation
     String generateCustomerId();
+    Customer getCustomerByAadharNumber(String aadharNumber);
+Customer getCustomerByPhoneNumber(String phoneNumber);
+
 }

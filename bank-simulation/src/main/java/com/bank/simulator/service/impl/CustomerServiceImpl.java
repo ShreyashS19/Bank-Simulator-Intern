@@ -60,6 +60,63 @@ public class CustomerServiceImpl implements CustomerService {
             return null;
         }
     }
+    
+    @Override
+public Customer getCustomerByAadharNumber(String aadharNumber) {
+    String query = "SELECT * FROM Customer WHERE aadhar_number = ? LIMIT 1";
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        stmt.setString(1, aadharNumber);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            Customer customer = new Customer();
+            customer.setCustomerId(rs.getString("customer_id"));
+            customer.setName(rs.getString("name"));
+            customer.setPhoneNumber(rs.getString("phone_number"));
+            customer.setEmail(rs.getString("email"));
+            customer.setAddress(rs.getString("address"));
+            customer.setCustomerPin(rs.getString("customer_pin"));
+            customer.setAadharNumber(rs.getString("aadhar_number"));
+            customer.setDob(rs.getDate("dob").toLocalDate());
+            customer.setStatus(rs.getString("status"));
+            return customer;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
+@Override
+public Customer getCustomerByPhoneNumber(String phoneNumber) {
+    String query = "SELECT * FROM Customer WHERE phone_number = ? LIMIT 1";
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        stmt.setString(1, phoneNumber);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            Customer customer = new Customer();
+            customer.setCustomerId(rs.getString("customer_id"));
+            customer.setName(rs.getString("name"));
+            customer.setPhoneNumber(rs.getString("phone_number"));
+            customer.setEmail(rs.getString("email"));
+            customer.setAddress(rs.getString("address"));
+            customer.setCustomerPin(rs.getString("customer_pin"));
+            customer.setAadharNumber(rs.getString("aadhar_number"));
+            customer.setDob(rs.getDate("dob").toLocalDate());
+            customer.setStatus(rs.getString("status"));
+            return customer;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
 
     @Override
     public Customer getCustomerById(String customerId) {

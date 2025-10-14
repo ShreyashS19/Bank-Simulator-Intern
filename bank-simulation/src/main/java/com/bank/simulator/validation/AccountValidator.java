@@ -270,7 +270,6 @@ public ValidationResult validateAccountNumberFormat(String accountNumber) {
     
     accountNumber = accountNumber.trim();
     
-    // Check for invalid characters first
     if (accountNumber.contains(" ")) {
         return ValidationResult.failure("Account number cannot contain spaces. Please enter digits only.");
     }
@@ -283,7 +282,7 @@ public ValidationResult validateAccountNumberFormat(String accountNumber) {
         return ValidationResult.failure("Account number can only contain numeric digits (0-9). Special characters like '-', '+', '.' are not allowed.");
     }
     
-    // Length validation
+   
     if (accountNumber.length() < 10) {
         return ValidationResult.failure("Account number is too short. It must be at least 10 digits.");
     }

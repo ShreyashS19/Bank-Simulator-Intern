@@ -21,56 +21,12 @@ public class TransactionController {
     private final TransactionService transactionService = new TransactionServiceImpl();
     private final TransactionValidator transactionValidator = new TransactionValidator();
 
-    // @POST
-    // @Path("/createTransaction")
-    // public Response createTransaction(Transaction transaction) {
-    //     try {
-    //         System.out.println("=== TRANSACTION CREATION REQUEST ===");
-
-    //         ValidationResult validationResult = transactionValidator.validateTransactionForCreation(transaction);
-
-    //         if (!validationResult.isValid()) {
-    //             System.err.println("=== TRANSACTION VALIDATION FAILED ===");
-    //             System.err.println("Errors: " + validationResult.getAllErrorMessages());
-
-    //             return Response.status(Response.Status.BAD_REQUEST)
-    //                 .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
-    //                 .build();
-    //         }
-
-    //         String transactionId = transactionService.createTransaction(transaction);
-
-    //         if (transactionId != null && transactionId.startsWith("TXN_")) {
-    //             return Response.status(Response.Status.CREATED)
-    //                 .entity(ApiResponse.success("Transaction created successfully", transactionId))
-    //                 .build();
-    //         } else if ("INSUFFICIENT_BALANCE".equals(transactionId)) {
-    //             return Response.status(Response.Status.BAD_REQUEST)
-    //                 .entity(ApiResponse.error("Insufficient balance for this transaction"))
-    //                 .build();
-    //         } else {
-    //             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-    //                 .entity(ApiResponse.error("Failed to create transaction"))
-    //                 .build();
-    //         }
-
-    //     } catch (Exception e) {
-    //         System.err.println("Exception in transaction creation: " + e.getMessage());
-    //         e.printStackTrace();
-
-    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-    //             .build();
-    //     }
-    // }
-    
-    @POST
+@POST
 @Path("/createTransaction")
 public Response createTransaction(Transaction transaction) {
     try {
         System.out.println("=== TRANSACTION CREATION REQUEST ===");
 
-        // Auto-fill transactionType if empty or null
         if (transaction.getTransactionType() == null || transaction.getTransactionType().trim().isEmpty()) {
             transaction.setTransactionType("ONLINE");
             System.out.println("Transaction type not provided, defaulting to: ONLINE");

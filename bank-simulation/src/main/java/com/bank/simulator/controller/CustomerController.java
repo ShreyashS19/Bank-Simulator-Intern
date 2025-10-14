@@ -129,6 +129,71 @@ public Response updateCustomer(@PathParam("customer_id") String customerId, Cust
                 .build();
         }
     }
+    
+    @GET
+@Path("/aadhar/{aadharNumber}")
+public Response getCustomerByAadhar(@PathParam("aadharNumber") String aadharNumber) {
+    try {
+        if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ApiResponse.error("Aadhar number is required"))
+                .build();
+        }
+
+        // Optional quick format check (12 digits)
+        if (!aadharNumber.matches("^[0-9]{12}$")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ApiResponse.error("Aadhar number must be exactly 12 digits"))
+                .build();
+        }
+
+        Customer customer = customerService.getCustomerByAadharNumber(aadharNumber);
+        if (customer != null) {
+            return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(ApiResponse.error("Customer not found for given Aadhar"))
+                .build();
+        }
+    } catch (Exception e) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+            .build();
+    }
+}
+
+@GET
+@Path("/phone/{phoneNumber}")
+public Response getCustomerByPhone(@PathParam("phoneNumber") String phoneNumber) {
+    try {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ApiResponse.error("Phone number is required"))
+                .build();
+        }
+
+        // Optional quick format check (10 digits not starting with 0)
+        if (!phoneNumber.matches("^[1-9][0-9]{9}$")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ApiResponse.error("Phone number must be 10 digits and cannot start with 0"))
+                .build();
+        }
+
+        Customer customer = customerService.getCustomerByPhoneNumber(phoneNumber);
+        if (customer != null) {
+            return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(ApiResponse.error("Customer not found for given phone"))
+                .build();
+        }
+    } catch (Exception e) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+            .build();
+    }
+}
+
 
     @GET
     @Path("/all")

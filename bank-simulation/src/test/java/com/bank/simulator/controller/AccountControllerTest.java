@@ -91,7 +91,7 @@ class AccountControllerTest {
         assertEquals(500, statusCode);
     }
 
-    // Helper methods
+    
     private int simulateCreateAccountAPI(Account account) {
         if (account == null) return 400;
         if (account.getAmount() == null || account.getAmount().compareTo(BigDecimal.valueOf(600)) < 0) return 400;

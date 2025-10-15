@@ -1,14 +1,20 @@
 package com.bank.simulator.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 
 public class Customer {
+    @JsonIgnore 
     private String customerId;
+
     private String name;
     private String phoneNumber;
     private String email;
     private String address;
+    
+    @JsonIgnore  // ← PIN will NOT appear in any API response
     private String customerPin;
+    
     private String aadharNumber;
     private LocalDate dob;
     private String status = "Inactive";
@@ -28,7 +34,6 @@ public class Customer {
         this.status = status;
     }
 
-   
     public String getCustomerId() { return customerId; }
     public void setCustomerId(String customerId) { this.customerId = customerId; }
 

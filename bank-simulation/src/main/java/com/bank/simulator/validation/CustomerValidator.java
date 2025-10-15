@@ -316,8 +316,8 @@ public class CustomerValidator {
             return ValidationResult.failure("Customer PIN is required");
         }
         
-        if (!pin.matches("^[0-9]{4,6}$")) {
-            return ValidationResult.failure("Customer PIN must be 4-6 digits");
+        if (!pin.matches("^[0-9]{6}$")) {
+            return ValidationResult.failure("Customer PIN must be exactly 6 digits");
         }
         
         return ValidationResult.success();
@@ -408,6 +408,8 @@ public class CustomerValidator {
         
         return ValidationResult.success();
     }
+    
+    
 
     public ValidationResult validateAadharNumberUniqueness(String aadharNumber) {
         String query = "SELECT COUNT(*) FROM Customer WHERE aadhar_number = ?";

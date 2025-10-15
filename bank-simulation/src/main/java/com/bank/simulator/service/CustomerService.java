@@ -10,6 +10,7 @@ public interface CustomerService {
     Customer getCustomerById(String customerId);
     boolean updateCustomer(String customerId, Customer customer);
     boolean deleteCustomer(String customerId);
+     boolean deleteCustomerByAadhar(String aadharNumber);
     List<Customer> getAllCustomers();
     
     

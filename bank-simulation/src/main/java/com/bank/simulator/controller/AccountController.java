@@ -81,6 +81,10 @@ public class AccountController {
         try {
             Account account = accountService.getAccountById(accountId);
             if (account != null) {
+                // Remove sensitive internal IDs
+                account.setAccountId(null);
+                account.setCustomerId(null);
+                
                 return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -100,6 +104,10 @@ public class AccountController {
         try {
             Account account = accountService.getAccountByCustomerId(customerId);
             if (account != null) {
+                // Remove sensitive internal IDs
+                account.setAccountId(null);
+                account.setCustomerId(null);
+                
                 return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -117,8 +125,24 @@ public class AccountController {
     @Path("/number/{account_number}")
     public Response getAccountByAccountNumber(@PathParam("account_number") String accountNumber) {
         try {
+            if (accountNumber == null || accountNumber.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number is required"))
+                    .build();
+            }
+
+            if (!accountNumber.matches("^[0-9]{10,25}$")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number must be 10-25 digits"))
+                    .build();
+            }
+
             Account account = accountService.getAccountByAccountNumber(accountNumber);
             if (account != null) {
+                // Remove sensitive internal IDs
+                account.setAccountId(null);
+                account.setCustomerId(null);
+                
                 return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -126,6 +150,8 @@ public class AccountController {
                     .build();
             }
         } catch (Exception e) {
+            System.err.println("Exception in fetching account by number: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();
@@ -163,35 +189,24 @@ public class AccountController {
         }
     }
 
-
-
-    @DELETE
-    @Path("/number/{account_number}")
-    public Response deleteByNumber(@PathParam("account_number") String number) {
-        try {
-            Account acc = accountService.getAccountByAccountNumber(number);
-            if (acc == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                               .entity(ApiResponse.error("Account not found"))
-                               .build();
-            }
-            boolean ok = accountService.deleteAccount(acc.getAccountId());
-            return ok
-                   ? Response.ok(ApiResponse.success("Account deleted")).build()
-                   : Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                             .entity(ApiResponse.error("Deletion failed")).build();
-
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(ApiResponse.error("Internal error: " + e.getMessage()))
-                           .build();
-        }
-    }
-     
     @PUT
     @Path("/number/{account_number}")
     public Response updateByAccountNumber(@PathParam("account_number") String accountNumber, Account account) {
         try {
+            System.out.println("=== ACCOUNT UPDATE BY NUMBER REQUEST ===");
+            
+            if (accountNumber == null || accountNumber.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number is required"))
+                    .build();
+            }
+
+            if (!accountNumber.matches("^[0-9]{10,25}$")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number must be 10-25 digits"))
+                    .build();
+            }
+
             Account existingAccount = accountService.getAccountByAccountNumber(accountNumber);
             if (existingAccount == null) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -217,17 +232,20 @@ public class AccountController {
                     .build();
             }
         } catch (Exception e) {
+            System.err.println("Exception in update by account number: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();
         }
     }
-    
+
     @DELETE
     @Path("/{account_id}")
     public Response deleteAccount(@PathParam("account_id") String accountId) {
         try {
             System.out.println("=== ACCOUNT DELETION REQUEST ===");
+            System.out.println("Account ID: " + accountId);
             
             boolean deleted = accountService.deleteAccount(accountId);
             if (deleted) {
@@ -239,8 +257,53 @@ public class AccountController {
             }
         } catch (Exception e) {
             System.err.println("Exception during account deletion: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    @DELETE
+    @Path("/number/{account_number}")
+    public Response deleteByNumber(@PathParam("account_number") String accountNumber) {
+        try {
+            System.out.println("=== ACCOUNT DELETION BY NUMBER REQUEST ===");
+            System.out.println("Account Number: " + accountNumber);
+            
+            if (accountNumber == null || accountNumber.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number is required"))
+                    .build();
+            }
+
+            if (!accountNumber.matches("^[0-9]{10,25}$")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Account number must be 10-25 digits"))
+                    .build();
+            }
+
+            Account account = accountService.getAccountByAccountNumber(accountNumber);
+            if (account == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Account not found"))
+                    .build();
+            }
+
+            boolean deleted = accountService.deleteAccount(account.getAccountId());
+            if (deleted) {
+                return Response.ok(ApiResponse.success("Account deleted permanently")).build();
+            } else {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ApiResponse.error("Deletion failed"))
+                    .build();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Exception during account deletion by number: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal error: " + e.getMessage()))
                 .build();
         }
     }

@@ -255,6 +255,34 @@ public Customer getCustomerByPhoneNumber(String phoneNumber) {
         }
         return false;
     }
+    
+    @Override
+public boolean deleteCustomerByAadhar(String aadharNumber) {
+    System.out.println("=== DELETING CUSTOMER BY AADHAR: " + aadharNumber + " ===");
+    
+    String query = "DELETE FROM Customer WHERE aadhar_number = ?";
+    
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+        
+        stmt.setString(1, aadharNumber);
+        int result = stmt.executeUpdate();
+        
+        if (result > 0) {
+            System.out.println("Customer deleted successfully by Aadhar: " + aadharNumber);
+            System.out.println("Rows affected: " + result);
+            return true;
+        } else {
+            System.err.println("No customer found with Aadhar: " + aadharNumber);
+            return false;
+        }
+    } catch (SQLException e) {
+        System.err.println("Error deleting customer by Aadhar: " + e.getMessage());
+        e.printStackTrace();
+        return false;
+    }
+}
+
 
     @Override
     public boolean isAadharNumberExists(String aadharNumber) {

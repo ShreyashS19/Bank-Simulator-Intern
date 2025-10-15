@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 public class Transaction {
     
+    @JsonIgnore 
+    private String pin;  
+
     @JsonIgnore
     private String transactionId;
     
@@ -29,7 +32,7 @@ public class Transaction {
 
     public Transaction(String transactionId, String accountId, String senderAccountNumber, 
                       String receiverAccountNumber, BigDecimal amount, String transactionType, 
-                      String description, LocalDateTime createdDate) {
+                      String description, String pin, LocalDateTime createdDate) {
         this.transactionId = transactionId;
         this.accountId = accountId;
         this.senderAccountNumber = senderAccountNumber;
@@ -37,7 +40,16 @@ public class Transaction {
         this.amount = amount;
         this.transactionType = transactionType;
         this.description = description;
+        this.pin = pin;
         this.createdDate = createdDate;
+    }
+    
+     public String getPin() {
+        return pin;
+    }
+
+    public void setPin(String pin) {
+        this.pin = pin;
     }
 
     public String getTransactionId() {
@@ -114,6 +126,7 @@ public class Transaction {
                 ", amount=" + amount +
                 ", transactionType='" + transactionType + '\'' +
                 ", description='" + description + '\'' +
+                ", pin='***'" +  // Don't log actual PIN
                 ", createdDate=" + createdDate +
                 '}';
     }

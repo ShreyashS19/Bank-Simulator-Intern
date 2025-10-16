@@ -1,7 +1,7 @@
 
 db.url=jdbc:mysql://localhost:3306/bank_simulation?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 db.username=root
-db.password=Shreyash##18##
+db.password=YOUR_DATABASE_PASSWORD_HERE
 
   
 app.name=Bank Simulator
@@ -15,8 +15,9 @@ email.smtp.starttls.enable=true
 email.smtp.ssl.trust=smtp.gmail.com
 
 
-email.from=banksimulatorr@gmail.com
-email.username=banksimulatorr@gmail.com
-email.password=stnc gmfs emzp rmae
+email.from=YOUR_EMAIL@gmail.com
+email.username=YOUR_EMAIL@gmail.com
+email.password=YOUR_16_CHAR_APP_PASSWORD
+
 
 email.enabled=true

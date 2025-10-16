@@ -25,14 +25,22 @@ public class DBConfig {
         try (InputStream input = DBConfig.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (input != null) {
                 props.load(input);
+                System.out.println("✓ Loaded database configuration from application.properties");
+            } else {
+                System.err.println("⚠️ application.properties not found!");
             }
         } catch (IOException e) {
-            System.err.println("Could not load application.properties");
+            System.err.println("⚠️ Could not load application.properties: " + e.getMessage());
         }
         
+        // ⭐ UPDATED: Remove hardcoded password from fallback
         DB_URL = props.getProperty("db.url", "jdbc:mysql://localhost:3306/bank_simulation?useSSL=false&serverTimezone=UTC");
         DB_USERNAME = props.getProperty("db.username", "root");
-        DB_PASSWORD = props.getProperty("db.password", "Shreyash##18##");
+        DB_PASSWORD = props.getProperty("db.password", "");  // ← Changed to empty string
+        
+        if (DB_PASSWORD.isEmpty()) {
+            System.err.println("⚠️ WARNING: Database password not found in application.properties!");
+        }
     }
 
     public static Connection getConnection() throws SQLException {
@@ -41,7 +49,7 @@ public class DBConfig {
 
     public static void testConnection() throws SQLException {   
         try (Connection conn = getConnection()) {
-            System.out.println("Database connection successful!");
+            System.out.println("✓ Database connection successful!");
         }
     }
 }

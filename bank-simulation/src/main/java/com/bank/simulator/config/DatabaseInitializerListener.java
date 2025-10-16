@@ -6,6 +6,9 @@ import jakarta.servlet.annotation.WebListener;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.util.Properties;
+import java.io.InputStream;
+import java.io.IOException;
 
 @WebListener
 public class DatabaseInitializerListener implements ServletContextListener {
@@ -25,6 +28,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
         }
     }
 
+    // ⭐ UPDATED: Now reads from application.properties
     private void createDatabaseIfNotExists() throws SQLException {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -34,9 +38,25 @@ public class DatabaseInitializerListener implements ServletContextListener {
             throw new SQLException("MySQL JDBC Driver not found", e);
         }
         
-        String dbUrl = "jdbc:mysql://localhost:3306/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+        // ⭐ NEW: Load credentials from application.properties
+        Properties props = new Properties();
         String username = "root";
-        String password = "Shreyash##18##";
+        String password = "";
+        
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("application.properties")) {
+            if (input != null) {
+                props.load(input);
+                username = props.getProperty("db.username", "root");
+                password = props.getProperty("db.password", "");
+                System.out.println("Loaded database credentials from application.properties");
+            } else {
+                System.err.println("⚠️ application.properties not found! Using default credentials.");
+            }
+        } catch (IOException e) {
+            System.err.println("⚠️ Could not load application.properties: " + e.getMessage());
+        }
+        
+        String dbUrl = "jdbc:mysql://localhost:3306/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
         
         try (Connection conn = java.sql.DriverManager.getConnection(dbUrl, username, password);
              Statement stmt = conn.createStatement()) {
@@ -83,7 +103,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 )
             """;
 
-                        String transactionTable = """
+            String transactionTable = """
                 CREATE TABLE IF NOT EXISTS Transaction (
                     transaction_id VARCHAR(50) PRIMARY KEY,
                     account_id VARCHAR(50) NOT NULL,
@@ -96,7 +116,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
-
 
             stmt.executeUpdate(customerTable);
             System.out.println(" -> Table 'Customer' is ready.");

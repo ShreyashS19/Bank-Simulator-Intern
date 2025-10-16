@@ -1,0 +1,67 @@
+# ========================================
+# Sensitive Configuration Files
+# ========================================
+src/main/resources/application.properties
+src/test/resources/test-application.properties
+
+# ========================================
+# Build Files
+# ========================================
+target/
+*.class
+*.jar
+*.war
+*.ear
+dependency-reduced-pom.xml
+
+# ========================================
+# IDE Files
+# ========================================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.settings/
+.project
+.classpath
+.metadata/
+
+# VS Code
+.vscode/
+
+# NetBeans
+nbproject/
+nb-configuration.xml
+
+# ========================================
+# OS Files
+# ========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ========================================
+# Log Files
+# ========================================
+*.log
+logs/
+
+# ========================================
+# Temporary Files
+# ========================================
+*.tmp
+*.bak
+*.swp
+*~.nib

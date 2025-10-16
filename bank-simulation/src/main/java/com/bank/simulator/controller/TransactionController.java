@@ -35,13 +35,37 @@ public class TransactionController {
         try {
             System.out.println("\n=== TRANSACTION CREATION REQUEST ===");
 
-            // STEP 1: Auto-fill transaction type if empty
+            // STEP 1: Validate transaction object is not null
+            if (transaction == null) {
+                System.err.println("=== VALIDATION FAILED: Transaction object is null ===");
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Transaction data is required"))
+                    .build();
+            }
+
+            // STEP 2: Validate PIN is provided and not empty
+            if (transaction.getPin() == null || transaction.getPin().trim().isEmpty()) {
+                System.err.println("=== VALIDATION FAILED: Customer PIN missing ===");
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Customer PIN is required"))
+                    .build();
+            }
+
+            // STEP 3: Validate PIN format (must be 6 digits)
+            if (!transaction.getPin().matches("^[0-9]{6}$")) {
+                System.err.println("=== PIN VALIDATION FAILED: Invalid format ===");
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("PIN must be exactly 6 digits"))
+                    .build();
+            }
+
+            // STEP 4: Auto-fill transaction type if empty
             if (transaction.getTransactionType() == null || transaction.getTransactionType().trim().isEmpty()) {
                 transaction.setTransactionType("ONLINE");
                 System.out.println("Transaction type not provided, defaulting to: ONLINE");
             }
 
-            // STEP 2: Basic field validation
+            // STEP 5: Basic field validation
             if (transaction.getSenderAccountNumber() == null || transaction.getSenderAccountNumber().trim().isEmpty()) {
                 System.err.println("=== VALIDATION FAILED: Sender account number missing ===");
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -56,7 +80,7 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 3: Check if sender and receiver are the same (BEFORE PIN validation)
+            // STEP 6: Check if sender and receiver are the same
             if (transaction.getSenderAccountNumber().equals(transaction.getReceiverAccountNumber())) {
                 System.err.println("=== SAME ACCOUNT ERROR ===");
                 System.err.println("Sender: " + transaction.getSenderAccountNumber());
@@ -66,22 +90,7 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 4: Validate PIN format (must be 6 digits)
-            if (transaction.getPin() == null || transaction.getPin().trim().isEmpty()) {
-                System.err.println("=== PIN VALIDATION FAILED: PIN not provided ===");
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("PIN is required for transaction"))
-                    .build();
-            }
-
-            if (!transaction.getPin().matches("^[0-9]{6}$")) {
-                System.err.println("=== PIN VALIDATION FAILED: Invalid format ===");
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("PIN must be exactly 6 digits"))
-                    .build();
-            }
-
-            // STEP 5: Get sender's account
+            // STEP 7: Get sender's account
             Account senderAccount = accountService.getAccountByAccountNumber(transaction.getSenderAccountNumber());
             
             if (senderAccount == null) {
@@ -92,7 +101,7 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 6: Get customer details using customer_id from account
+            // STEP 8: Get customer details using customer_id from account
             Customer customer = customerService.getCustomerById(senderAccount.getCustomerId());
             
             if (customer == null) {
@@ -103,7 +112,7 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 7: Validate PIN - compare entered PIN with stored customerPin
+            // STEP 9: Validate PIN - compare entered PIN with stored customerPin
             String storedPin = customer.getCustomerPin();
             String enteredPin = transaction.getPin();
 
@@ -123,7 +132,7 @@ public class TransactionController {
 
             System.out.println("✓ PIN validation successful");
 
-            // STEP 8: Proceed with regular transaction validation
+            // STEP 10: Proceed with regular transaction validation
             ValidationResult validationResult = transactionValidator.validateTransactionForCreation(transaction);
 
             if (!validationResult.isValid()) {
@@ -135,7 +144,7 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 9: Create transaction
+            // STEP 11: Create transaction
             String transactionId = transactionService.createTransaction(transaction);
 
             if (transactionId != null && transactionId.startsWith("TXN_")) {

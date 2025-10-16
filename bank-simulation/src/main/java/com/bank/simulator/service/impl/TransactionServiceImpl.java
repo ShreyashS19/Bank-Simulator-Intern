@@ -3,6 +3,7 @@ package com.bank.simulator.service.impl;
 import com.bank.simulator.config.DBConfig;
 import com.bank.simulator.model.Transaction;
 import com.bank.simulator.service.TransactionService;
+import com.bank.simulator.service.NotificationService;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -107,6 +108,25 @@ public class TransactionServiceImpl implements TransactionService {
             System.out.println("=== TRANSACTION COMPLETED SUCCESSFULLY ===");
             System.out.println("Transaction ID: " + transactionId);
 
+            // ⭐ NEW: Send email notifications after successful transaction
+            try {
+                System.out.println("\n=== INITIATING EMAIL NOTIFICATIONS ===");
+                sendTransactionEmails(
+                    conn,
+                    senderAccountId,
+                    receiverAccountId,
+                    transaction.getSenderAccountNumber(),
+                    transaction.getReceiverAccountNumber(),
+                    transaction.getAmount(),
+                    transactionId
+                );
+            } catch (Exception emailEx) {
+                System.err.println("\n⚠️ EMAIL NOTIFICATION FAILED (Transaction was successful)");
+                System.err.println("Error: " + emailEx.getMessage());
+                emailEx.printStackTrace();
+                // Don't fail the transaction if email fails
+            }
+
             return transactionId;
 
         } catch (SQLException e) {
@@ -137,49 +157,157 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+    // ⭐ NEW: Helper method to send transaction emails with dynamic bank names
+    private void sendTransactionEmails(
+            Connection conn,
+            String senderAccountId,
+            String receiverAccountId,
+            String senderAccountNumber,
+            String receiverAccountNumber,
+            BigDecimal amount,
+            String transactionId
+    ) throws SQLException {
+        
+        // Initialize notification service
+        NotificationService notificationService = new NotificationServiceImpl();
+
+        // ⭐ UPDATED: Get sender customer details + bank name + account number
+        String senderQuery = "SELECT c.name, c.email, a.bank_name, a.account_number FROM Customer c " +
+                            "JOIN Account a ON c.customer_id = a.customer_id " +
+                            "WHERE a.account_id = ?";
+        
+        String senderName = null;
+        String senderEmail = null;
+        String senderBankName = null;
+        String senderAccNum = null;
+        
+        try (PreparedStatement stmt = conn.prepareStatement(senderQuery)) {
+            stmt.setString(1, senderAccountId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                senderName = rs.getString("name");
+                senderEmail = rs.getString("email");
+                senderBankName = rs.getString("bank_name");
+                senderAccNum = rs.getString("account_number");
+            }
+        }
+
+        // ⭐ UPDATED: Get receiver customer details + bank name + account number
+        String receiverQuery = "SELECT c.name, c.email, a.bank_name, a.account_number FROM Customer c " +
+                              "JOIN Account a ON c.customer_id = a.customer_id " +
+                              "WHERE a.account_id = ?";
+        
+        String receiverName = null;
+        String receiverEmail = null;
+        String receiverBankName = null;
+        String receiverAccNum = null;
+        
+        try (PreparedStatement stmt = conn.prepareStatement(receiverQuery)) {
+            stmt.setString(1, receiverAccountId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                receiverName = rs.getString("name");
+                receiverEmail = rs.getString("email");
+                receiverBankName = rs.getString("bank_name");
+                receiverAccNum = rs.getString("account_number");
+            }
+        }
+
+        System.out.println("--- Email Details ---");
+        System.out.println("Sender: " + senderName + " <" + senderEmail + ">");
+        System.out.println("Sender Bank: " + senderBankName);
+        System.out.println("Receiver: " + receiverName + " <" + receiverEmail + ">");
+        System.out.println("Receiver Bank: " + receiverBankName);
+
+        // ⭐ UPDATED: Send email to sender (debit notification) with bank name
+        if (senderEmail != null && senderName != null && !senderEmail.trim().isEmpty()) {
+            System.out.println("\n📧 Sending DEBIT notification to sender: " + senderEmail);
+            try {
+                notificationService.sendTransactionNotificationToSender(
+                    senderEmail,
+                    senderName,
+                    senderBankName != null ? senderBankName : "Bank",  // Fallback to "Bank" if null
+                    senderAccNum != null ? senderAccNum : senderAccountNumber,
+                    receiverAccountNumber,
+                    amount,
+                    transactionId
+                );
+                System.out.println("✓ Sender email sent successfully");
+            } catch (Exception e) {
+                System.err.println("✗ Failed to send email to sender: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("⚠️ Sender email not found or invalid. Skipping sender notification.");
+        }
+
+        // ⭐ UPDATED: Send email to receiver (credit notification) with bank name
+        if (receiverEmail != null && receiverName != null && !receiverEmail.trim().isEmpty()) {
+            System.out.println("\n📧 Sending CREDIT notification to receiver: " + receiverEmail);
+            try {
+                notificationService.sendTransactionNotificationToReceiver(
+                    receiverEmail,
+                    receiverName,
+                    receiverBankName != null ? receiverBankName : "Bank",  // Fallback to "Bank" if null
+                    receiverAccNum != null ? receiverAccNum : receiverAccountNumber,
+                    senderAccountNumber,
+                    amount,
+                    transactionId
+                );
+                System.out.println("✓ Receiver email sent successfully");
+            } catch (Exception e) {
+                System.err.println("✗ Failed to send email to receiver: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("⚠️ Receiver email not found or invalid. Skipping receiver notification.");
+        }
+
+        System.out.println("=== EMAIL NOTIFICATIONS COMPLETED ===\n");
+    }
 
     @Override
-public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
-    System.out.println("\n");
-    System.out.println("=== FETCHING TRANSACTIONS FOR ACCOUNT NUMBER: " + accountNumber + " ===");
-    
-    List<Transaction> transactions = new ArrayList<>();
-    
-    String query = "SELECT t.* FROM Account a " +
-                  "JOIN Transaction t ON a.account_id = t.account_id " +
-                  "WHERE t.sender_account_number = ? OR t.receiver_account_number = ? " +
-                  "ORDER BY t.created_date DESC";
+    public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
+        System.out.println("\n");
+        System.out.println("=== FETCHING TRANSACTIONS FOR ACCOUNT NUMBER: " + accountNumber + " ===");
+        
+        List<Transaction> transactions = new ArrayList<>();
+        
+        String query = "SELECT t.* FROM Account a " +
+                      "JOIN Transaction t ON a.account_id = t.account_id " +
+                      "WHERE t.sender_account_number = ? OR t.receiver_account_number = ? " +
+                      "ORDER BY t.created_date DESC";
 
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
-        
-        stmt.setString(1, accountNumber);
-        stmt.setString(2, accountNumber);
-        
-        ResultSet rs = stmt.executeQuery();
-        
-        while (rs.next()) {
-            Transaction transaction = new Transaction();
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             
-            transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
-            transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
-            transaction.setAmount(rs.getBigDecimal("amount"));
-            transaction.setTransactionType(rs.getString("transaction_type"));
-            transaction.setDescription(rs.getString("description"));
-            transaction.setCreatedDate(rs.getTimestamp("created_date").toLocalDateTime());
+            stmt.setString(1, accountNumber);
+            stmt.setString(2, accountNumber);
             
-            transactions.add(transaction);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Transaction transaction = new Transaction();
+                
+                transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
+                transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
+                transaction.setAmount(rs.getBigDecimal("amount"));
+                transaction.setTransactionType(rs.getString("transaction_type"));
+                transaction.setDescription(rs.getString("description"));
+                transaction.setCreatedDate(rs.getTimestamp("created_date").toLocalDateTime());
+                
+                transactions.add(transaction);
+            }
+            
+            System.out.println("Found " + transactions.size() + " transactions");
+            
+        } catch (SQLException e) {
+            System.err.println("Error fetching transactions: " + e.getMessage());
+            e.printStackTrace();
         }
         
-        System.out.println("Found " + transactions.size() + " transactions");
-        
-    } catch (SQLException e) {
-        System.err.println("Error fetching transactions: " + e.getMessage());
-        e.printStackTrace();
+        return transactions;
     }
-    
-    return transactions;
-}
 
     @Override
     public String generateTransactionId() {

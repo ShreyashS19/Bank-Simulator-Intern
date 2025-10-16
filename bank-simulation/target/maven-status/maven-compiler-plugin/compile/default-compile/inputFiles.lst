@@ -4,6 +4,8 @@ D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\servic
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\validation\TransactionValidator.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\controller\CustomerController.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\model\Transaction.java
+D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\service\impl\NotificationServiceImpl.java
+D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\service\NotificationService.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\validation\AccountValidator.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\validation\ValidationResult.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\model\Account.java

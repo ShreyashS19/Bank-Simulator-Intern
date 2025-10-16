@@ -28,7 +28,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
         }
     }
 
-    // ⭐ UPDATED: Now reads from application.properties
     private void createDatabaseIfNotExists() throws SQLException {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -38,7 +37,7 @@ public class DatabaseInitializerListener implements ServletContextListener {
             throw new SQLException("MySQL JDBC Driver not found", e);
         }
         
-        // ⭐ NEW: Load credentials from application.properties
+        
         Properties props = new Properties();
         String username = "root";
         String password = "";
@@ -50,10 +49,10 @@ public class DatabaseInitializerListener implements ServletContextListener {
                 password = props.getProperty("db.password", "");
                 System.out.println("Loaded database credentials from application.properties");
             } else {
-                System.err.println("⚠️ application.properties not found! Using default credentials.");
+                System.err.println(" application.properties not found! Using default credentials.");
             }
         } catch (IOException e) {
-            System.err.println("⚠️ Could not load application.properties: " + e.getMessage());
+            System.err.println(" Could not load application.properties: " + e.getMessage());
         }
         
         String dbUrl = "jdbc:mysql://localhost:3306/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";

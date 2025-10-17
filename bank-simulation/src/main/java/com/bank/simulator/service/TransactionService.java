@@ -10,4 +10,5 @@ public interface TransactionService {
     List<Transaction> getTransactionsByAccountNumber(String accountNumber);
     
     String generateTransactionId();
+    List<Transaction> getAllTransactions();
 }

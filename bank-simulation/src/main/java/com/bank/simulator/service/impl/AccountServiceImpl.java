@@ -9,7 +9,40 @@ import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccountServiceImpl implements AccountService {
-    private static final AtomicInteger accountCounter = new AtomicInteger(1);
+    private static final AtomicInteger accountCounter;
+    
+    // Static initialization block - runs once when class is loaded
+    static {
+        accountCounter = new AtomicInteger(getMaxAccountIdFromDB() + 1);
+        System.out.println("=== ACCOUNT SERVICE INITIALIZED ===");
+        System.out.println("Starting account counter at: " + accountCounter.get());
+    }
+    
+    /**
+     * Queries database to find the highest existing account ID number
+     * and returns it so the counter can start from the next available ID
+     */
+    private static int getMaxAccountIdFromDB() {
+        String query = "SELECT MAX(CAST(SUBSTRING(account_id, 5) AS UNSIGNED)) as max_id FROM Account";
+        
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int maxId = rs.getInt("max_id");
+                System.out.println("✓ Loaded max account ID from database: " + maxId);
+                return maxId;
+            }
+        } catch (SQLException e) {
+            System.err.println("Warning: Could not load max account ID from database");
+            System.err.println("Error: " + e.getMessage());
+            System.err.println("Starting counter from 0 (first ID will be ACC_1)");
+        }
+        
+        return 0; // Start from 1 if no accounts exist or on error
+    }
 
     @Override
     public String createAccount(Account account) {
@@ -113,12 +146,12 @@ public class AccountServiceImpl implements AccountService {
             
             if (rs.next()) {
                 String customerId = rs.getString("customer_id");
-                System.out.println(" Found existing customer with Aadhar: " + aadharNumber);
-                System.out.println(" Customer ID: " + customerId);
+                System.out.println("✓ Found existing customer with Aadhar: " + aadharNumber);
+                System.out.println("✓ Customer ID: " + customerId);
                 return customerId;
             } else {
-                System.err.println("Aadhar number not found in Customer database");
-                System.err.println(" Aadhar: " + aadharNumber);
+                System.err.println("✗ Aadhar number not found in Customer database");
+                System.err.println("✗ Aadhar: " + aadharNumber);
                 return "ERROR: Aadhar number is not linked with any customer";
             }
             
@@ -277,13 +310,11 @@ public class AccountServiceImpl implements AccountService {
         System.out.println("New Account Number: " + account.getAccountNumber());
         System.out.println("Aadhar Number: " + account.getAadharNumber());
         
-        
         String customerId = findCustomerIdByAadhar(account.getAadharNumber());
         if (customerId == null) {
             System.err.println("Error: Customer not found for Aadhar: " + account.getAadharNumber());
             return false;
         }
-        
 
         String customerPhone = getCustomerPhoneByCustomerId(customerId);
         if (customerPhone == null) {

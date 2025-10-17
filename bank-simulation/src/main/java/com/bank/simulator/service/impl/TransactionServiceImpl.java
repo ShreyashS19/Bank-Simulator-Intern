@@ -4,6 +4,7 @@ import com.bank.simulator.config.DBConfig;
 import com.bank.simulator.model.Transaction;
 import com.bank.simulator.service.TransactionService;
 import com.bank.simulator.service.NotificationService;
+import java.sql.Statement;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -14,7 +15,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TransactionServiceImpl implements TransactionService {
     
-    private static final AtomicInteger transactionCounter = new AtomicInteger(1);
+    private static final AtomicInteger transactionCounter;
+    
+    // Static initialization block - runs once when class is loaded
+    static {
+        transactionCounter = new AtomicInteger(getMaxTransactionIdFromDB() + 1);
+        System.out.println("=== TRANSACTION SERVICE INITIALIZED ===");
+        System.out.println("Starting transaction counter at: " + transactionCounter.get());
+    }
+    
+    /**
+     * Queries database to find the highest existing transaction ID number
+     * and returns it so the counter can start from the next available ID
+     */
+    private static int getMaxTransactionIdFromDB() {
+        String query = "SELECT MAX(CAST(SUBSTRING(transaction_id, 5) AS UNSIGNED)) as max_id FROM Transaction";
+        
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int maxId = rs.getInt("max_id");
+                System.out.println("✓ Loaded max transaction ID from database: " + maxId);
+                return maxId;
+            }
+        } catch (SQLException e) {
+            System.err.println("Warning: Could not load max transaction ID from database");
+            System.err.println("Error: " + e.getMessage());
+            System.err.println("Starting counter from 0 (first ID will be TXN_1)");
+        }
+        
+        return 0; // Start from 1 if no transactions exist or on error
+    }
 
     @Override
     public String createTransaction(Transaction transaction) {
@@ -342,5 +376,41 @@ public class TransactionServiceImpl implements TransactionService {
         }
         
         return BigDecimal.ZERO;
+    }
+
+    @Override
+    public List<Transaction> getAllTransactions() {
+        System.out.println("\n=== FETCHING ALL TRANSACTIONS ===");
+        
+        List<Transaction> transactions = new ArrayList<>();
+        
+        String query = "SELECT * FROM Transaction ORDER BY created_date DESC";
+
+        try (Connection conn = DBConfig.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            
+            while (rs.next()) {
+                Transaction transaction = new Transaction();
+                
+                transaction.setTransactionId(rs.getString("transaction_id"));
+                transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
+                transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
+                transaction.setAmount(rs.getBigDecimal("amount"));
+                transaction.setTransactionType(rs.getString("transaction_type"));
+                transaction.setDescription(rs.getString("description"));
+                transaction.setCreatedDate(rs.getTimestamp("created_date").toLocalDateTime());
+                
+                transactions.add(transaction);
+            }
+            
+            System.out.println("Total transactions fetched: " + transactions.size());
+            
+        } catch (SQLException e) {
+            System.err.println("Error fetching all transactions: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return transactions;
     }
 }

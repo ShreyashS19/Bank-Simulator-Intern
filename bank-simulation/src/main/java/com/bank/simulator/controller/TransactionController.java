@@ -18,6 +18,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import com.bank.simulator.service.ExcelGeneratorService;
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Path("/transaction")
 @Produces(MediaType.APPLICATION_JSON)
@@ -35,7 +39,6 @@ public class TransactionController {
         try {
             System.out.println("\n=== TRANSACTION CREATION REQUEST ===");
 
-            // STEP 1: Validate transaction object is not null
             if (transaction == null) {
                 System.err.println("=== VALIDATION FAILED: Transaction object is null ===");
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -43,7 +46,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 2: Validate PIN is provided and not empty
             if (transaction.getPin() == null || transaction.getPin().trim().isEmpty()) {
                 System.err.println("=== VALIDATION FAILED: Customer PIN missing ===");
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -51,7 +53,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 3: Validate PIN format (must be 6 digits)
             if (!transaction.getPin().matches("^[0-9]{6}$")) {
                 System.err.println("=== PIN VALIDATION FAILED: Invalid format ===");
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -59,13 +60,11 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 4: Auto-fill transaction type if empty
             if (transaction.getTransactionType() == null || transaction.getTransactionType().trim().isEmpty()) {
                 transaction.setTransactionType("ONLINE");
                 System.out.println("Transaction type not provided, defaulting to: ONLINE");
             }
 
-            // STEP 5: Basic field validation
             if (transaction.getSenderAccountNumber() == null || transaction.getSenderAccountNumber().trim().isEmpty()) {
                 System.err.println("=== VALIDATION FAILED: Sender account number missing ===");
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -80,7 +79,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 6: Check if sender and receiver are the same
             if (transaction.getSenderAccountNumber().equals(transaction.getReceiverAccountNumber())) {
                 System.err.println("=== SAME ACCOUNT ERROR ===");
                 System.err.println("Sender: " + transaction.getSenderAccountNumber());
@@ -90,7 +88,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 7: Get sender's account
             Account senderAccount = accountService.getAccountByAccountNumber(transaction.getSenderAccountNumber());
             
             if (senderAccount == null) {
@@ -101,7 +98,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 8: Get customer details using customer_id from account
             Customer customer = customerService.getCustomerById(senderAccount.getCustomerId());
             
             if (customer == null) {
@@ -112,7 +108,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 9: Validate PIN - compare entered PIN with stored customerPin
             String storedPin = customer.getCustomerPin();
             String enteredPin = transaction.getPin();
 
@@ -130,9 +125,8 @@ public class TransactionController {
                     .build();
             }
 
-            System.out.println("✓ PIN validation successful");
+            System.out.println("PIN validation successful");
 
-            // STEP 10: Proceed with regular transaction validation
             ValidationResult validationResult = transactionValidator.validateTransactionForCreation(transaction);
 
             if (!validationResult.isValid()) {
@@ -144,7 +138,6 @@ public class TransactionController {
                     .build();
             }
 
-            // STEP 11: Create transaction
             String transactionId = transactionService.createTransaction(transaction);
 
             if (transactionId != null && transactionId.startsWith("TXN_")) {
@@ -153,12 +146,14 @@ public class TransactionController {
                 return Response.status(Response.Status.CREATED)
                     .entity(ApiResponse.success("Transaction created successfully", transactionId))
                     .build();
-            } else if ("INSUFFICIENT_BALANCE".equals(transactionId)) {
+            } 
+            else if ("INSUFFICIENT_BALANCE".equals(transactionId)) {
                 System.err.println("=== INSUFFICIENT BALANCE ===");
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ApiResponse.error("Insufficient balance for this transaction"))
                     .build();
-            } else {
+            } 
+            else {
                 System.err.println("=== TRANSACTION CREATION FAILED ===");
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error("Failed to create transaction"))
@@ -213,6 +208,104 @@ public class TransactionController {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();
+        }
+    }
+
+    @GET
+    @Path("/download/all")
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response downloadAllTransactionsExcel() {
+        try {
+            System.out.println("\n=== DOWNLOAD ALL TRANSACTIONS REQUEST ===");
+            
+            List<Transaction> transactions = transactionService.getAllTransactions();
+            
+            if (transactions.isEmpty()) {
+                System.out.println("No transactions found");
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(ApiResponse.error("No transactions available to download"))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            
+            System.out.println("Transactions to export: " + transactions.size());
+            
+            ExcelGeneratorService excelService = new ExcelGeneratorService();
+            ByteArrayOutputStream excelStream = excelService.generateTransactionsExcel(transactions);
+            
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String filename = "all_transactions_" + timestamp + ".xlsx";
+            
+            System.out.println("Generated file: " + filename);
+            System.out.println("File size: " + excelStream.size() + " bytes");
+            
+            return Response.ok(excelStream.toByteArray())
+                    .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                    .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .build();
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error generating Excel file: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ApiResponse.error("Failed to generate Excel file: " + e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+    }
+
+    
+    @GET
+    @Path("/download/{accountNumber}")
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response downloadTransactionsByAccount(@PathParam("accountNumber") String accountNumber) {
+        System.out.println("\n=== DOWNLOAD TRANSACTIONS BY ACCOUNT REQUEST ===");
+        System.out.println("Account Number: " + accountNumber);
+        
+        try {
+            if (accountNumber == null || accountNumber.trim().isEmpty()) {
+                System.err.println("Invalid account number provided");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(ApiResponse.error("Account number is required"))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            
+            List<Transaction> transactions = transactionService.getTransactionsByAccountNumber(accountNumber);
+            
+            if (transactions == null || transactions.isEmpty()) {
+                System.err.println("No transactions found for account: " + accountNumber);
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(ApiResponse.error("No transactions found for account number: " + accountNumber))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            
+            System.out.println("Found " + transactions.size() + " transactions for account: " + accountNumber);
+            
+            ExcelGeneratorService excelService = new ExcelGeneratorService();
+            ByteArrayOutputStream excelStream = excelService.generateTransactionsExcel(transactions);
+            
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String filename = "transactions_" + accountNumber + "_" + timestamp + ".xlsx";
+            
+            System.out.println("Excel file generated successfully: " + filename);
+            System.out.println("File size: " + excelStream.size() + " bytes");
+            
+            return Response.ok(excelStream.toByteArray())
+                    .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                    .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .build();
+                    
+        } catch (Exception e) {
+            System.err.println("Error generating Excel file for account " + accountNumber);
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ApiResponse.error("Failed to generate Excel file: " + e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
     }
 }

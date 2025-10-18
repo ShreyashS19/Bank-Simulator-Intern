@@ -115,15 +115,30 @@ public class DatabaseInitializerListener implements ServletContextListener {
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
+          // Add this to the createTablesIfNotExists() method in DatabaseInitializerListener.java
+
+            String userTable = """
+                CREATE TABLE IF NOT EXISTS User (
+                    id VARCHAR(50) PRIMARY KEY,
+                    full_name VARCHAR(100) NOT NULL,
+                    email VARCHAR(100) NOT NULL UNIQUE,
+                    password VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """;
+
+            stmt.executeUpdate(userTable);
+            System.out.println("Table 'User' is ready.");
 
             stmt.executeUpdate(customerTable);
-            System.out.println(" -> Table 'Customer' is ready.");
+            System.out.println(" Table 'Customer' is ready.");
             
             stmt.executeUpdate(accountTable);
-            System.out.println(" -> Table 'Account' is ready with new structure.");
+            System.out.println(" Table 'Account' is ready with new structure.");
             
             stmt.executeUpdate(transactionTable);
-            System.out.println(" -> Table 'Transaction' is ready with new structure.");
+            System.out.println("  Table 'Transaction' is ready with new structure.");
             
             System.out.println("All tables are ready.");
             

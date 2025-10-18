@@ -1,3 +1,4 @@
+com\bank\simulator\config\CorsFilter.class
 com\bank\simulator\model\Account.class
 com\bank\simulator\service\impl\NotificationServiceImpl$1.class
 com\bank\simulator\service\TransactionService.class

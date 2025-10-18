@@ -10,6 +10,7 @@ D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\valida
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\model\Account.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\model\SignupRequest.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\service\impl\TransactionServiceImpl.java
+D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\config\CorsFilter.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\controller\AccountController.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\config\DatabaseInitializerListener.java
 D:\meeting\without valid\bank-simulation\src\main\java\com\bank\simulator\controller\TransactionController.java

@@ -9,6 +9,7 @@ import com.bank.simulator.validation.ValidationResult;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -38,7 +39,7 @@ public class AccountController {
             }
             
             if (account.getAmount() == null) {
-                account.setAmount(BigDecimal.valueOf(600.00));
+                account.setAmount(BigDecimal.valueOf(0.00));
             }
             
             if (account.getStatus() == null || account.getStatus().trim().isEmpty()) {
@@ -75,51 +76,51 @@ public class AccountController {
         }
     }
 
-    @GET
-    @Path("/{account_id}")
-    public Response getAccount(@PathParam("account_id") String accountId) {
-        try {
-            Account account = accountService.getAccountById(accountId);
-            if (account != null) {
-                // Remove sensitive internal IDs
-                account.setAccountId(null);
-                account.setCustomerId(null);
+    // @GET
+    // @Path("/{account_id}")
+    // public Response getAccount(@PathParam("account_id") String accountId) {
+    //     try {
+    //         Account account = accountService.getAccountById(accountId);
+    //         if (account != null) {
+    //             // Remove sensitive internal IDs
+    //             account.setAccountId(null);
+    //             account.setCustomerId(null);
                 
-                return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Account not found"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
-        }
-    }
+    //             return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Account not found"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
 
-    @GET
-    @Path("/customer/{customer_id}")
-    public Response getAccountByCustomerId(@PathParam("customer_id") String customerId) {
-        try {
-            Account account = accountService.getAccountByCustomerId(customerId);
-            if (account != null) {
-                // Remove sensitive internal IDs
-                account.setAccountId(null);
-                account.setCustomerId(null);
+    // @GET
+    // @Path("/customer/{customer_id}")
+    // public Response getAccountByCustomerId(@PathParam("customer_id") String customerId) {
+    //     try {
+    //         Account account = accountService.getAccountByCustomerId(customerId);
+    //         if (account != null) {
+    //             // Remove sensitive internal IDs
+    //             account.setAccountId(null);
+    //             account.setCustomerId(null);
                 
-                return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Account not found for customer"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
-        }
-    }
+    //             return Response.ok(ApiResponse.success("Account retrieved successfully", account)).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Account not found for customer"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
 
     @GET
     @Path("/number/{account_number}")
@@ -139,7 +140,6 @@ public class AccountController {
 
             Account account = accountService.getAccountByAccountNumber(accountNumber);
             if (account != null) {
-                // Remove sensitive internal IDs
                 account.setAccountId(null);
                 account.setCustomerId(null);
                 
@@ -158,36 +158,36 @@ public class AccountController {
         }
     }
 
-    @PUT
-    @Path("/{account_id}")
-    public Response updateAccount(@PathParam("account_id") String accountId, Account account) {
-        try {
-            System.out.println("=== ACCOUNT UPDATE REQUEST ===");
+    // @PUT
+    // @Path("/{account_id}")
+    // public Response updateAccount(@PathParam("account_id") String accountId, Account account) {
+    //     try {
+    //         System.out.println("=== ACCOUNT UPDATE REQUEST ===");
             
-            ValidationResult validationResult = accountValidator.validateAccountForUpdate(accountId, account);
+    //         ValidationResult validationResult = accountValidator.validateAccountForUpdate(accountId, account);
             
-            if (!validationResult.isValid()) {
-                System.err.println("Account update validation failed: " + validationResult.getFirstErrorMessage());
+    //         if (!validationResult.isValid()) {
+    //             System.err.println("Account update validation failed: " + validationResult.getFirstErrorMessage());
                 
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
-                    .build();
-            }
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                 .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
+    //                 .build();
+    //         }
 
-            boolean updated = accountService.updateAccount(accountId, account);
-            if (updated) {
-                return Response.ok(ApiResponse.success("Account updated successfully")).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Account not found or update failed"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
-        }
-    }
+    //         boolean updated = accountService.updateAccount(accountId, account);
+    //         if (updated) {
+    //             return Response.ok(ApiResponse.success("Account updated successfully")).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Account not found or update failed"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
 
     @PUT
     @Path("/number/{account_number}")
@@ -240,30 +240,59 @@ public class AccountController {
         }
     }
 
-    @DELETE
-    @Path("/{account_id}")
-    public Response deleteAccount(@PathParam("account_id") String accountId) {
-        try {
-            System.out.println("=== ACCOUNT DELETION REQUEST ===");
-            System.out.println("Account ID: " + accountId);
+    // @DELETE
+    // @Path("/{account_id}")
+    // public Response deleteAccount(@PathParam("account_id") String accountId) {
+    //     try {
+    //         System.out.println("=== ACCOUNT DELETION REQUEST ===");
+    //         System.out.println("Account ID: " + accountId);
             
-            boolean deleted = accountService.deleteAccount(accountId);
-            if (deleted) {
-                return Response.ok(ApiResponse.success("Account deleted permanently")).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Account not found or deletion failed"))
-                    .build();
+    //         boolean deleted = accountService.deleteAccount(accountId);
+    //         if (deleted) {
+    //             return Response.ok(ApiResponse.success("Account deleted permanently")).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Account not found or deletion failed"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         System.err.println("Exception during account deletion: " + e.getMessage());
+    //         e.printStackTrace();
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
+    
+
+    @GET
+    @Path("/all")
+    public Response getAllAccounts() {
+        try {
+            System.out.println(" GET ALL ACCOUNTS REQUEST");
+            
+            List<Account> accounts = accountService.getAllAccounts();
+            
+            for (Account account : accounts) {
+                account.setAccountId(null);
+                account.setCustomerId(null);
             }
+            
+            System.out.println(" Returning " + accounts.size() + " accounts");
+            
+            return Response.ok(ApiResponse.success("Accounts retrieved successfully", accounts))
+                    .build();
+            
         } catch (Exception e) {
-            System.err.println("Exception during account deletion: " + e.getMessage());
+            System.err.println(" Error in getAllAccounts: " + e.getMessage());
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
+                    .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                    .build();
         }
     }
 
+    
     @DELETE
     @Path("/number/{account_number}")
     public Response deleteByNumber(@PathParam("account_number") String accountNumber) {

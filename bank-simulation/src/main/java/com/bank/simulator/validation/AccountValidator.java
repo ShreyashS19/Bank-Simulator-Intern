@@ -335,20 +335,20 @@ public ValidationResult validateAccountNumberFormat(String accountNumber) {
         System.out.println("Amount class: " + (amount != null ? amount.getClass() : "null"));
         
         if (amount == null) {
-            System.out.println("Amount is null - will be set to default 600 after validation");
+            System.out.println("Amount is null - will be set to default 0 after validation");
             return ValidationResult.success(); 
         }
         
-        System.out.println("Comparing amount " + amount + " with minimum 600");
-        BigDecimal minimumBalance = BigDecimal.valueOf(600);
+        System.out.println("Comparing amount " + amount + " with minimum 0");
+        BigDecimal minimumBalance = BigDecimal.valueOf(0);
         int comparison = amount.compareTo(minimumBalance);
         
-        System.out.println("Comparison result: " + comparison + " (negative means amount < 600)");
+        System.out.println("Comparison result: " + comparison + " (negative means amount < 0)");
         
         if (comparison < 0) {
             System.out.println(" VALIDATION FAILED - Amount " + amount + " is less than minimum " + minimumBalance);
             System.err.println("Error: Amount below minimum balance");
-            return ValidationResult.failure("Amount must have a minimum balance of 600");
+            return ValidationResult.failure("Amount must have a minimum balance of 0");
         }
         
         if (amount.scale() > 2) {

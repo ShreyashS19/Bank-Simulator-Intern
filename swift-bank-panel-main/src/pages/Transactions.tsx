@@ -5,24 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Search, ArrowLeftRight, CheckCircle, TrendingUp, Download, Loader2 } from "lucide-react";
 import { transactionService, Transaction } from "@/services/transactionService";
-import { exportTransactionsToExcel } from "@/utils/excelExport";
 
 const Transactions = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchedTransactions, setSearchedTransactions] = useState<Transaction[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [searchAccountNumber, setSearchAccountNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [formData, setFormData] = useState({
     senderAccountNumber: "",
     receiverAccountNumber: "",
     amount: "",
-    transactionType: "transfer",
+    transactionType: "ONLINE", // Fixed to ONLINE only
     description: "",
     pin: ""
   });
@@ -48,34 +45,71 @@ const Transactions = () => {
       } else {
         toast.success(`Found ${data.length} transaction(s)`);
       }
-    } catch (error) {
-      toast.error("Failed to fetch transactions. Please try again.");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Failed to fetch transactions. Please try again.";
+      toast.error(errorMessage);
       setSearchedTransactions([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
+    if (!searchAccountNumber.trim()) {
+      toast.error("Please enter an account number first");
+      return;
+    }
+
     if (searchedTransactions.length === 0) {
       toast.error("No transactions to download");
       return;
     }
-    exportTransactionsToExcel(searchedTransactions, searchAccountNumber);
-    toast.success("Excel file downloaded successfully!");
+
+    try {
+      const blob = await transactionService.downloadTransactions(searchAccountNumber);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `transactions_${searchAccountNumber}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Excel file downloaded successfully!");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Failed to download Excel file";
+      toast.error(errorMessage);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newTransaction: Transaction = {
-      id: Date.now(),
-      ...formData,
-      status: "success",
-      timestamp: new Date().toISOString()
-    };
-    setTransactions([newTransaction, ...transactions]);
-    toast.success("Transaction completed successfully!");
-    handleReset();
+    setIsCreating(true);
+
+    try {
+      const transactionData = {
+        senderAccountNumber: formData.senderAccountNumber.trim(),
+        receiverAccountNumber: formData.receiverAccountNumber.trim(),
+        amount: parseFloat(formData.amount),
+        transactionType: "ONLINE", // Always ONLINE
+        description: formData.description.trim() || undefined,
+        pin: formData.pin.trim()
+      };
+
+      const transactionId = await transactionService.createTransaction(transactionData);
+      toast.success(`Transaction completed successfully! ID: ${transactionId}`);
+      handleReset();
+
+      // Refresh transactions if we're viewing the sender or receiver account
+      if (searchAccountNumber === formData.senderAccountNumber || searchAccountNumber === formData.receiverAccountNumber) {
+        handleSearchByAccount();
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Transaction failed. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleReset = () => {
@@ -83,28 +117,22 @@ const Transactions = () => {
       senderAccountNumber: "",
       receiverAccountNumber: "",
       amount: "",
-      transactionType: "transfer",
+      transactionType: "ONLINE",
       description: "",
       pin: ""
     });
   };
 
-  const filteredTransactions = transactions.filter(transaction =>
-    transaction.senderAccountNumber.includes(searchTerm) ||
-    transaction.receiverAccountNumber.includes(searchTerm) ||
-    transaction.transactionType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalTransactions = transactions.length;
-  const successfulTransactions = transactions.filter(t => t.status === 'success').length;
-  const totalVolume = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+  // Calculate summary stats
+  const totalTransactions = searchedTransactions.length;
+  const totalVolume = searchedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Transaction Management</h1>
-          <p className="text-muted-foreground mt-1">Create and track transactions</p>
+          <p className="text-muted-foreground mt-1">Create and track online transactions</p>
         </div>
 
         {/* Summary Cards */}
@@ -125,7 +153,7 @@ const Transactions = () => {
               <CheckCircle className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{successfulTransactions}</div>
+              <div className="text-2xl font-bold">{totalTransactions}</div>
             </CardContent>
           </Card>
 
@@ -145,7 +173,7 @@ const Transactions = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ArrowLeftRight className="h-5 w-5" />
-              Create New Transaction
+              Create New Online Transaction
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -157,6 +185,7 @@ const Transactions = () => {
                     id="senderAccountNumber"
                     value={formData.senderAccountNumber}
                     onChange={(e) => setFormData({ ...formData, senderAccountNumber: e.target.value })}
+                    placeholder="Enter sender account"
                     required
                   />
                 </div>
@@ -166,6 +195,7 @@ const Transactions = () => {
                     id="receiverAccountNumber"
                     value={formData.receiverAccountNumber}
                     onChange={(e) => setFormData({ ...formData, receiverAccountNumber: e.target.value })}
+                    placeholder="Enter receiver account"
                     required
                   />
                 </div>
@@ -174,48 +204,65 @@ const Transactions = () => {
                   <Input
                     id="amount"
                     type="number"
+                    step="0.01"
+                    min="0.01"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="Enter amount"
                     required
                   />
                 </div>
+                
+                {/* Transaction Type - Hidden/Read-only since it's always ONLINE */}
                 <div className="space-y-2">
                   <Label htmlFor="transactionType">Transaction Type</Label>
-                  <Select 
-                    value={formData.transactionType} 
-                    onValueChange={(value) => setFormData({ ...formData, transactionType: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="transfer">Transfer</SelectItem>
-                      <SelectItem value="deposit">Deposit</SelectItem>
-                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="transactionType"
+                    value="ONLINE"
+                    disabled
+                    className="bg-gray-100"
+                  />
+                  <p className="text-xs text-muted-foreground">All transactions are online</p>
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description (Optional)</Label>
                   <Input
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Enter description"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pin">PIN</Label>
+                  <Label htmlFor="pin">Sender PIN</Label>
                   <Input
                     id="pin"
                     type="password"
+                    maxLength={6}
                     value={formData.pin}
-                    onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 6) {
+                        setFormData({ ...formData, pin: value });
+                      }
+                    }}
+                    placeholder="6-digit PIN"
                     required
                   />
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button type="submit">Create Transaction</Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Create Transaction"
+                  )}
+                </Button>
                 <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
               </div>
             </form>
@@ -285,39 +332,51 @@ const Transactions = () => {
                     No transactions found for account number: {searchAccountNumber}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto rounded-md border">
                     <table className="w-full">
-                      <thead>
+                      <thead className="bg-muted/50">
                         <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium">Transaction ID</th>
                           <th className="text-left py-3 px-4 font-medium">Sender Account</th>
                           <th className="text-left py-3 px-4 font-medium">Receiver Account</th>
                           <th className="text-left py-3 px-4 font-medium">Amount</th>
-                          <th className="text-left py-3 px-4 font-medium">Transaction Type</th>
+                          <th className="text-left py-3 px-4 font-medium">Type</th>
                           <th className="text-left py-3 px-4 font-medium">Description</th>
-                          <th className="text-left py-3 px-4 font-medium">Status</th>
                           <th className="text-left py-3 px-4 font-medium">Date/Time</th>
                         </tr>
                       </thead>
                       <tbody>
                         {searchedTransactions.map((transaction) => (
                           <motion.tr 
-                            key={transaction.id} 
+                            key={transaction.transactionId} 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="border-b hover:bg-muted/50 transition-colors"
                           >
-                            <td className="py-3 px-4 font-mono text-sm">{transaction.senderAccountNumber}</td>
-                            <td className="py-3 px-4 font-mono text-sm">{transaction.receiverAccountNumber}</td>
-                            <td className="py-3 px-4 font-semibold">₹{Number(transaction.amount).toLocaleString()}</td>
-                            <td className="py-3 px-4 capitalize">{transaction.transactionType}</td>
-                            <td className="py-3 px-4 text-sm">{transaction.description || '-'}</td>
+                            <td className="py-3 px-4 font-mono text-sm">
+                              {transaction.transactionId || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-sm">
+                              {transaction.senderAccountNumber}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-sm">
+                              {transaction.receiverAccountNumber}
+                            </td>
+                            <td className="py-3 px-4 font-semibold">
+                              ₹{Number(transaction.amount).toLocaleString()}
+                            </td>
                             <td className="py-3 px-4">
-                              <span className="px-2 py-1 rounded-full text-xs bg-secondary/20 text-secondary">
-                                {transaction.status}
+                              <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                {transaction.transactionType}
                               </span>
                             </td>
+                            <td className="py-3 px-4 text-sm">
+                              {transaction.description || '-'}
+                            </td>
                             <td className="py-3 px-4 text-sm text-muted-foreground">
-                              {new Date(transaction.timestamp).toLocaleString()}
+                              {transaction.createdDate 
+                                ? new Date(transaction.createdDate).toLocaleString()
+                                : 'N/A'}
                             </td>
                           </motion.tr>
                         ))}
@@ -329,7 +388,6 @@ const Transactions = () => {
             )}
           </CardContent>
         </Card>
-
       </div>
     </DashboardLayout>
   );

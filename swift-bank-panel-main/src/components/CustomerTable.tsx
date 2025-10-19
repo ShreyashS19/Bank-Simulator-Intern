@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
-import { Customer } from "@/data/dummyCustomers";
+import { Customer } from "@/services/customerService"; 
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -12,16 +12,15 @@ interface CustomerTableProps {
 
 export const CustomerTable = ({ customers, onView, onEdit, onDelete }: CustomerTableProps) => {
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
+            <TableHead>Customer ID</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone Number</TableHead>
             <TableHead>Aadhar Number</TableHead>
-            {/* REMOVED: Account Number column */}
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -29,19 +28,20 @@ export const CustomerTable = ({ customers, onView, onEdit, onDelete }: CustomerT
         <TableBody>
           {customers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                 No customers found
               </TableCell>
             </TableRow>
           ) : (
             customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell className="font-medium">{customer.id}</TableCell>
+              <TableRow key={customer.customerId || customer.aadharNumber}>
+                <TableCell className="font-medium">
+                  {customer.customerId || 'N/A'}
+                </TableCell>
                 <TableCell>{customer.name}</TableCell>
                 <TableCell>{customer.email}</TableCell>
                 <TableCell>{customer.phoneNumber}</TableCell>
-                <TableCell>{customer.aadharNumber}</TableCell>
-                {/* REMOVED: Account Number cell */}
+                <TableCell className="font-mono">{customer.aadharNumber}</TableCell>
                 <TableCell>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs ${
                     customer.status.toLowerCase() === 'active' 
@@ -58,6 +58,7 @@ export const CustomerTable = ({ customers, onView, onEdit, onDelete }: CustomerT
                       size="icon"
                       onClick={() => onView(customer)}
                       className="h-8 w-8"
+                      title="View details"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -66,6 +67,7 @@ export const CustomerTable = ({ customers, onView, onEdit, onDelete }: CustomerT
                       size="icon"
                       onClick={() => onEdit(customer)}
                       className="h-8 w-8"
+                      title="Edit customer"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -74,6 +76,7 @@ export const CustomerTable = ({ customers, onView, onEdit, onDelete }: CustomerT
                       size="icon"
                       onClick={() => onDelete(customer)}
                       className="h-8 w-8 text-destructive hover:text-destructive"
+                      title="Delete customer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

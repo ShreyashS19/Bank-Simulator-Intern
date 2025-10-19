@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Account } from "@/data/dummyAccounts";
+import { Account } from "@/services/accountService"; // ✅ Fixed import
 import { Loader2 } from "lucide-react";
 
 interface AccountEditModalProps {
@@ -15,8 +15,20 @@ interface AccountEditModalProps {
   onChange: (account: Account) => void;
 }
 
-export const AccountEditModal = ({ account, open, isLoading, onClose, onSave, onChange }: AccountEditModalProps) => {
+export const AccountEditModal = ({ 
+  account, 
+  open, 
+  isLoading, 
+  onClose, 
+  onSave, 
+  onChange 
+}: AccountEditModalProps) => {
   if (!account) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(account);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -25,102 +37,125 @@ export const AccountEditModal = ({ account, open, isLoading, onClose, onSave, on
           <DialogTitle>Edit Account</DialogTitle>
           <DialogDescription>Update account information</DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-account-number">Account Number</Label>
-            <Input
-              id="edit-account-number"
-              value={account.accountNumber}
-              onChange={(e) => onChange({ ...account, accountNumber: e.target.value })}
-            />
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Account Number (Read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-accountNumber">Account Number</Label>
+              <Input
+                id="edit-accountNumber"
+                value={account.accountNumber}
+                disabled
+                className="bg-gray-100 font-mono"
+              />
+            </div>
+
+            {/* Name on Account */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-nameOnAccount">Name on Account</Label>
+              <Input
+                id="edit-nameOnAccount"
+                value={account.nameOnAccount}
+                onChange={(e) => onChange({ ...account, nameOnAccount: e.target.value })}
+              />
+            </div>
+
+            {/* Bank Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-bankName">Bank Name</Label>
+              <Input
+                id="edit-bankName"
+                value={account.bankName}
+                onChange={(e) => onChange({ ...account, bankName: e.target.value })}
+              />
+            </div>
+
+            {/* IFSC Code */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-ifscCode">IFSC Code</Label>
+              <Input
+                id="edit-ifscCode"
+                value={account.ifscCode}
+                onChange={(e) => onChange({ ...account, ifscCode: e.target.value.toUpperCase() })}
+                maxLength={11}
+                className="font-mono"
+              />
+            </div>
+
+            {/* Phone Number
+            <div className="space-y-2">
+              <Label htmlFor="edit-phoneNumber">Phone Number</Label>
+              <Input
+                id="edit-phoneNumber"
+                value={account.phoneNumberLinked}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 10) {
+                    onChange({ ...account, phoneNumberLinked: value });
+                  }
+                }}
+                maxLength={10}
+              />
+            </div> */}
+
+            {/* Aadhar Number (Read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-aadhar">Aadhar Number</Label>
+              <Input
+                id="edit-aadhar"
+                value={account.aadharNumber}
+                disabled
+                className="bg-gray-100 font-mono"
+              />
+            </div>
+
+            {/* Balance */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-amount">Balance</Label>
+              <Input
+                id="edit-amount"
+                type="number"
+                step="0.01"
+                value={account.amount}
+                onChange={(e) => onChange({ ...account, amount: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select
+                value={account.status}
+                onValueChange={(value) => onChange({ ...account, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-customer-name">Customer Name</Label>
-            <Input
-              id="edit-customer-name"
-              value={account.customerName}
-              onChange={(e) => onChange({ ...account, customerName: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-name-on-account">Name on Account</Label>
-            <Input
-              id="edit-name-on-account"
-              value={account.nameOnAccount}
-              onChange={(e) => onChange({ ...account, nameOnAccount: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-account-type">Account Type</Label>
-            <Select 
-              value={account.accountType} 
-              onValueChange={(value: "Savings" | "Current") => onChange({ ...account, accountType: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Savings">Savings</SelectItem>
-                <SelectItem value="Current">Current</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-balance">Balance</Label>
-            <Input
-              id="edit-balance"
-              type="number"
-              step="0.01"
-              value={account.balance}
-              onChange={(e) => onChange({ ...account, balance: parseFloat(e.target.value) })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-bank-name">Bank Name</Label>
-            <Input
-              id="edit-bank-name"
-              value={account.bankName}
-              onChange={(e) => onChange({ ...account, bankName: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-ifsc">IFSC Code</Label>
-            <Input
-              id="edit-ifsc"
-              value={account.ifscCode}
-              onChange={(e) => onChange({ ...account, ifscCode: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-aadhar-account">Aadhar Number</Label>
-            <Input
-              id="edit-aadhar-account"
-              value={account.aadharNumber}
-              onChange={(e) => onChange({ ...account, aadharNumber: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-account-status">Status</Label>
-            <Select 
-              value={account.status} 
-              onValueChange={(value) => onChange({ ...account, status: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
-          <Button onClick={() => onSave(account)} disabled={isLoading}>
-            {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Updating...</> : "Save Changes"}
-          </Button>
-        </DialogFooter>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

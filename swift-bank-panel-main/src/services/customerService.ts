@@ -11,6 +11,7 @@ export interface Customer {
   aadharNumber: string;
   dob: string;
   status: string;
+  customerPin?: string;
 }
 
 export interface ApiResponse<T> {
@@ -25,37 +26,71 @@ export const customerService = {
     try {
       const response = await axios.get<ApiResponse<Customer[]>>(`${API_BASE_URL}/customer/all`);
       return response.data.data;
-    } catch (error) {
-      console.error('Error fetching customers:', error);
+    } catch (error: any) {
+      console.error(' Error fetching customers:', error);
       throw error;
     }
   },
 
   getCustomerByAadhar: async (aadharNumber: string): Promise<Customer> => {
     try {
-      const response = await axios.get<ApiResponse<Customer>>(`${API_BASE_URL}/customer/aadhar/${aadharNumber}`);
+      const response = await axios.get<ApiResponse<Customer>>(
+        `${API_BASE_URL}/customer/aadhar/${aadharNumber}`
+      );
       return response.data.data;
-    } catch (error) {
-      console.error('Error fetching customer:', error);
+    } catch (error: any) {
+      console.error(' Error fetching customer:', error);
       throw error;
     }
   },
 
   createCustomer: async (customer: Omit<Customer, 'customerId'>): Promise<string> => {
     try {
-      const response = await axios.post<ApiResponse<string>>(`${API_BASE_URL}/customer/onboard`, customer);
+      const response = await axios.post<ApiResponse<string>>(
+        `${API_BASE_URL}/customer/onboard`,
+        customer,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
       return response.data.data;
-    } catch (error) {
-      console.error('Error creating customer:', error);
+    } catch (error: any) {
+      console.error(' Error creating customer:', error.response?.data || error);
       throw error;
     }
   },
 
-  updateCustomer: async (customerId: string, customer: Partial<Customer>): Promise<void> => {
+  updateCustomerByAadhar: async (aadharNumber: string, customer: Customer): Promise<void> => {
     try {
-      await axios.put(`${API_BASE_URL}/customer/${customerId}`, customer);
-    } catch (error) {
-      console.error('Error updating customer:', error);
+      console.log('==========  UPDATING CUSTOMER ==========');
+      console.log('Aadhar:', aadharNumber);
+      
+      await axios.put<ApiResponse<void>>(
+        `${API_BASE_URL}/customer/aadhar/${aadharNumber}`,
+        {
+          name: customer.name,
+          phoneNumber: customer.phoneNumber,
+          email: customer.email,
+          address: customer.address,
+          customerPin: customer.customerPin,
+          aadharNumber: customer.aadharNumber,
+          dob: customer.dob,
+          status: customer.status
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+      console.log(' Customer updated successfully');
+    } catch (error: any) {
+      console.error(' Update failed:', error.response?.data || error);
       throw error;
     }
   },
@@ -63,8 +98,8 @@ export const customerService = {
   deleteCustomer: async (aadharNumber: string): Promise<void> => {
     try {
       await axios.delete(`${API_BASE_URL}/customer/aadhar/${aadharNumber}`);
-    } catch (error) {
-      console.error('Error deleting customer:', error);
+    } catch (error: any) {
+      console.error(' Error deleting customer:', error);
       throw error;
     }
   }

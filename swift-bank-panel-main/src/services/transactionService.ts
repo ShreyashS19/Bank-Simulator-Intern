@@ -57,5 +57,18 @@ export const transactionService = {
       console.error('Error downloading transactions:', error);
       throw error;
     }
+  },
+
+  getAllTransactions: async (): Promise<Transaction[]> => {
+  try {
+    console.log('🔍 Fetching all transactions');
+    const response = await axios.get<ApiResponse<Transaction[]>>(`${API_BASE_URL}/transaction/all`);
+    console.log('✅ Transactions fetched:', response.data.data.length);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching all transactions:', error);
+    return [];
   }
+}
+
 };

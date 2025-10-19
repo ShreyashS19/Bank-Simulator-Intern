@@ -7,7 +7,6 @@ public class SignupRequest {
     private String password;
     private String confirmPassword;
 
-    // Constructors
     public SignupRequest() {
     }
 
@@ -18,7 +17,6 @@ public class SignupRequest {
         this.confirmPassword = confirmPassword;
     }
 
-    // Getters and Setters
     public String getFullName() {
         return fullName;
     }

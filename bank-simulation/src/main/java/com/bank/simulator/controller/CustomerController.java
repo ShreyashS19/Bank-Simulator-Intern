@@ -38,7 +38,7 @@ public class CustomerController {
             }
 
             if (customer.getStatus() == null || customer.getStatus().trim().isEmpty()) {
-                customer.setStatus("Inactive");
+                customer.setStatus("active");
             }
 
             String customerId = customerService.createCustomer(customer);
@@ -60,28 +60,27 @@ public class CustomerController {
         }
     }
 
-    @GET
-    @Path("/{customer_id}")
-    public Response getCustomer(@PathParam("customer_id") String customerId) {
-        try {
-            Customer customer = customerService.getCustomerById(customerId);
-            if (customer != null) {
-                // Remove sensitive fields before sending response
-                customer.setCustomerPin(null);
-                customer.setCustomerId(null);
+    // @GET
+    // @Path("/{customer_id}")
+    // public Response getCustomer(@PathParam("customer_id") String customerId) {
+    //     try {
+    //         Customer customer = customerService.getCustomerById(customerId);
+    //         if (customer != null) {
+    //             customer.setCustomerPin(null);
+    //             customer.setCustomerId(null);
                 
-                return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Customer not found"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
-        }
-    }
+    //             return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Customer not found"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
 
     @GET
     @Path("/aadhar/{aadharNumber}")
@@ -101,7 +100,6 @@ public class CustomerController {
 
             Customer customer = customerService.getCustomerByAadharNumber(aadharNumber);
             if (customer != null) {
-                // Remove sensitive fields before sending response
                 customer.setCustomerPin(null);
                 customer.setCustomerId(null);
                 
@@ -118,91 +116,157 @@ public class CustomerController {
         }
     }
 
-    @GET
-    @Path("/phone/{phoneNumber}")
-    public Response getCustomerByPhone(@PathParam("phoneNumber") String phoneNumber) {
-        try {
-            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Phone number is required"))
-                    .build();
-            }
+    // @GET
+    // @Path("/phone/{phoneNumber}")
+    // public Response getCustomerByPhone(@PathParam("phoneNumber") String phoneNumber) {
+    //     try {
+    //         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                 .entity(ApiResponse.error("Phone number is required"))
+    //                 .build();
+    //         }
 
-            if (!phoneNumber.matches("^[1-9][0-9]{9}$")) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error("Phone number must be 10 digits and cannot start with 0"))
-                    .build();
-            }
+    //         if (!phoneNumber.matches("^[1-9][0-9]{9}$")) {
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                 .entity(ApiResponse.error("Phone number must be 10 digits and cannot start with 0"))
+    //                 .build();
+    //         }
 
-            Customer customer = customerService.getCustomerByPhoneNumber(phoneNumber);
-            if (customer != null) {
-                // Remove sensitive fields before sending response
-                customer.setCustomerPin(null);
-                customer.setCustomerId(null);
+    //         Customer customer = customerService.getCustomerByPhoneNumber(phoneNumber);
+    //         if (customer != null) {
+    //             customer.setCustomerPin(null);
+    //             customer.setCustomerId(null);
                 
-                return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Customer not found for given phone"))
+    //             return Response.ok(ApiResponse.success("Customer retrieved successfully", customer)).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Customer not found for given phone"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
+
+  
+@PUT
+@Path("/aadhar/{aadharNumber}")
+public Response updateCustomerByAadhar(
+    @PathParam("aadharNumber") String aadharNumber,
+    Customer customer
+) {
+    try {
+        System.out.println(" CUSTOMER UPDATE BY AADHAR REQUEST");
+        System.out.println("Aadhar Number: " + aadharNumber);
+        
+        if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Aadhar number is required"))
                     .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
         }
-    }
-
-    @PUT
-    @Path("/{customer_id}")
-    public Response updateCustomer(@PathParam("customer_id") String customerId, Customer customer) {
-        try {
-            System.out.println("=== CUSTOMER UPDATE REQUEST ===");
-            
-            ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
-            
-            if (!validationResult.isValid()) {
-                System.err.println("=== UPDATE VALIDATION FAILED ===");
-                System.err.println("Errors: " + validationResult.getAllErrorMessages());
-                
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
+        
+        if (!aadharNumber.matches("\\d{12}")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Aadhar number must be exactly 12 digits"))
                     .build();
-            }
-
-            boolean updated = customerService.updateCustomer(customerId, customer);
-            if (updated) {
-                return Response.ok(ApiResponse.success("Customer updated successfully")).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                    .entity(ApiResponse.error("Customer not found or update failed"))
-                    .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
-                .build();
         }
-    }
-
-    @DELETE
-    @Path("/{customer_id}")
-    public Response deleteCustomer(@PathParam("customer_id") String customerId) {
-        try {
-            boolean deleted = customerService.deleteCustomer(customerId);
-            if (deleted) {
-                return Response.ok(ApiResponse.success("Customer deleted successfully")).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
+        
+        Customer existingCustomer = customerService.getCustomerByAadharNumber(aadharNumber);
+        
+        if (existingCustomer == null) {
+            System.err.println(" Customer not found with Aadhar: " + aadharNumber);
+            return Response.status(Response.Status.NOT_FOUND)
                     .entity(ApiResponse.error("Customer not found"))
                     .build();
-            }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        }
+        
+        String customerId = existingCustomer.getCustomerId();
+        System.out.println("Found Customer ID: " + customerId);
+        
+        ValidationResult validationResult = 
+            customerValidator.validateCustomerForUpdate(customerId, customer);
+        
+        if (!validationResult.isValid()) {
+            System.err.println(" UPDATE VALIDATION FAILED");
+            System.err.println("Errors: " + validationResult.getAllErrorMessages());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
+                    .build();
+        }
+        
+        boolean updated = customerService.updateCustomer(customerId, customer);
+        
+        if (updated) {
+            System.out.println(" Customer updated successfully via Aadhar");
+            return Response.ok(ApiResponse.success("Customer updated successfully"))
+                    .build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("Customer not found or update failed"))
+                    .build();
+        }
+        
+    } catch (Exception e) {
+        System.err.println(" Exception in update by Aadhar: " + e.getMessage());
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
                 .build();
-        }
     }
+}
+
+    // @PUT
+    // @Path("/{customer_id}")
+    // public Response updateCustomer(@PathParam("customer_id") String customerId, Customer customer) {
+    //     try {
+    //         System.out.println("=== CUSTOMER UPDATE REQUEST ===");
+            
+    //         ValidationResult validationResult = customerValidator.validateCustomerForUpdate(customerId, customer);
+            
+    //         if (!validationResult.isValid()) {
+    //             System.err.println("=== UPDATE VALIDATION FAILED ===");
+    //             System.err.println("Errors: " + validationResult.getAllErrorMessages());
+                
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                 .entity(ApiResponse.error(validationResult.getFirstErrorMessage()))
+    //                 .build();
+    //         }
+
+    //         boolean updated = customerService.updateCustomer(customerId, customer);
+    //         if (updated) {
+    //             return Response.ok(ApiResponse.success("Customer updated successfully")).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Customer not found or update failed"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
+
+    // @DELETE
+    // @Path("/{customer_id}")
+    // public Response deleteCustomer(@PathParam("customer_id") String customerId) {
+    //     try {
+    //         boolean deleted = customerService.deleteCustomer(customerId);
+    //         if (deleted) {
+    //             return Response.ok(ApiResponse.success("Customer deleted successfully")).build();
+    //         } else {
+    //             return Response.status(Response.Status.NOT_FOUND)
+    //                 .entity(ApiResponse.error("Customer not found"))
+    //                 .build();
+    //         }
+    //     } catch (Exception e) {
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //             .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //             .build();
+    //     }
+    // }
     
     @DELETE
 @Path("/aadhar/{aadharNumber}")
@@ -211,7 +275,6 @@ public Response deleteCustomerByAadhar(@PathParam("aadharNumber") String aadharN
         System.out.println("=== DELETE CUSTOMER BY AADHAR REQUEST ===");
         System.out.println("Aadhar Number: " + aadharNumber);
         
-        // Validate Aadhar format
         if (aadharNumber == null || aadharNumber.trim().isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(ApiResponse.error("Aadhar number is required"))
@@ -224,7 +287,6 @@ public Response deleteCustomerByAadhar(@PathParam("aadharNumber") String aadharN
                 .build();
         }
 
-        // Delete customer
         boolean deleted = customerService.deleteCustomerByAadhar(aadharNumber);
         
         if (deleted) {
@@ -250,7 +312,6 @@ public Response deleteCustomerByAadhar(@PathParam("aadharNumber") String aadharN
         try {
             List<Customer> customers = customerService.getAllCustomers();
             
-            // Remove sensitive fields from all customers
             for (Customer customer : customers) {
                 customer.setCustomerPin(null);
                 customer.setCustomerId(null);

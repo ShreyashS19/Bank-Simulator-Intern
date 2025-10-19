@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
-import { Account } from "@/data/dummyAccounts";
+import { Account } from "@/services/accountService"; // ✅ Updated import
 import { motion } from "framer-motion";
 
 interface AccountTableProps {
@@ -24,10 +24,10 @@ export const AccountTable = ({ accounts, onView, onEdit, onDelete }: AccountTabl
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Account ID</TableHead>
             <TableHead>Account Number</TableHead>
-            <TableHead>Customer Name</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead>Name on Account</TableHead>
+            <TableHead>Bank Name</TableHead>
+            <TableHead>IFSC Code</TableHead>
             <TableHead>Balance</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -43,24 +43,18 @@ export const AccountTable = ({ accounts, onView, onEdit, onDelete }: AccountTabl
           ) : (
             accounts.map((account) => (
               <motion.tr
-                key={account.id}
+                key={account.accountId || account.accountNumber}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="hover:bg-muted/50 transition-colors"
               >
-                <TableCell className="font-medium">{account.id}</TableCell>
-                <TableCell className="font-mono text-sm">{account.accountNumber}</TableCell>
-                <TableCell>{account.customerName}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    account.accountType === 'Savings' 
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
-                      : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                  }`}>
-                    {account.accountType}
-                  </span>
+                <TableCell className="font-mono text-sm font-medium">
+                  {account.accountNumber}
                 </TableCell>
-                <TableCell className="font-semibold">{formatCurrency(account.balance)}</TableCell>
+                <TableCell>{account.nameOnAccount}</TableCell>
+                <TableCell>{account.bankName}</TableCell>
+                <TableCell className="font-mono text-sm">{account.ifscCode}</TableCell>
+                <TableCell className="font-semibold">{formatCurrency(account.amount)}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     account.status.toLowerCase() === 'active' 

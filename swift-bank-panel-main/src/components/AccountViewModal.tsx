@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Account } from "@/data/dummyAccounts";
+import { Account } from "@/services/accountService";
 
 interface AccountViewModalProps {
   account: Account | null;
@@ -27,49 +27,50 @@ export const AccountViewModal = ({ account, open, onClose, onEdit }: AccountView
           <DialogTitle>Account Details</DialogTitle>
           <DialogDescription>View complete account information</DialogDescription>
         </DialogHeader>
+        
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Account ID</Label>
-            <p className="font-medium">{account.id}</p>
-          </div>
+          {account.accountId && (
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Account ID</Label>
+              <p className="font-medium">{account.accountId}</p>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">Account Number</Label>
             <p className="font-medium font-mono">{account.accountNumber}</p>
           </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Customer Name</Label>
-            <p className="font-medium">{account.customerName}</p>
-          </div>
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">Name on Account</Label>
             <p className="font-medium">{account.nameOnAccount}</p>
           </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Account Type</Label>
-            <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-              account.accountType === 'Savings' 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
-                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-            }`}>
-              {account.accountType}
-            </span>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Balance</Label>
-            <p className="font-medium text-lg">{formatCurrency(account.balance)}</p>
-          </div>
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">Bank Name</Label>
             <p className="font-medium">{account.bankName}</p>
           </div>
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">IFSC Code</Label>
             <p className="font-medium font-mono">{account.ifscCode}</p>
           </div>
+          
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Balance</Label>
+            <p className="font-medium text-lg">{formatCurrency(account.amount)}</p>
+          </div>
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">Aadhar Number</Label>
-            <p className="font-medium">{account.aadharNumber}</p>
+            <p className="font-medium font-mono">{account.aadharNumber}</p>
           </div>
+          
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Phone Number</Label>
+            <p className="font-medium">{account.phoneNumberLinked}</p>
+          </div>
+          
           <div className="space-y-2">
             <Label className="text-muted-foreground">Status</Label>
             <span className={`inline-block px-2 py-1 rounded-full text-xs ${
@@ -80,13 +81,18 @@ export const AccountViewModal = ({ account, open, onClose, onEdit }: AccountView
               {account.status}
             </span>
           </div>
+          
+          {account.created && (
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Created</Label>
+              <p className="font-medium">{new Date(account.created).toLocaleDateString()}</p>
+            </div>
+          )}
         </div>
+        
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button onClick={() => {
-            onClose();
-            onEdit(account);
-          }}>Edit Account</Button>
+          <Button onClick={() => { onClose(); onEdit(account); }}>Edit Account</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

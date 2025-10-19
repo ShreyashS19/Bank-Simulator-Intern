@@ -1,42 +1,33 @@
-import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Customer } from "@/data/dummyCustomers";
+import { Customer } from "@/services/customerService";
 import { Loader2 } from "lucide-react";
 
 interface CustomerEditModalProps {
   customer: Customer | null;
   open: boolean;
+  isLoading: boolean;
   onClose: () => void;
   onSave: (customer: Customer) => void;
-  loading?: boolean;
+  onChange: (customer: Customer) => void;
 }
 
-export const CustomerEditModal = ({ customer, open, onClose, onSave, loading = false }: CustomerEditModalProps) => {
-  const [formData, setFormData] = useState<Customer>({
-    id: '',
-    name: '',
-    email: '',
-    phoneNumber: '',
-    address: '',
-    aadharNumber: '',
-    dob: '',
-    status: 'Active',
-    // REMOVED: accountNumber field
-  });
-
-  useEffect(() => {
-    if (customer) {
-      setFormData(customer);
-    }
-  }, [customer]);
+export const CustomerEditModal = ({
+  customer,
+  open,
+  isLoading,
+  onClose,
+  onSave,
+  onChange
+}: CustomerEditModalProps) => {
+  if (!customer) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave(customer); // Backend will handle all validation
   };
 
   return (
@@ -46,61 +37,102 @@ export const CustomerEditModal = ({ customer, open, onClose, onSave, loading = f
           <DialogTitle>Edit Customer</DialogTitle>
           <DialogDescription>Update customer information</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4 py-4">
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Aadhar Number (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
+              <Label htmlFor="edit-aadhar">Aadhar Number</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
+                id="edit-aadhar"
+                value={customer.aadharNumber}
+                disabled
+                className="bg-gray-100 font-mono"
               />
             </div>
+
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="edit-name">Full Name</Label>
               <Input
-                id="email"
+                id="edit-name"
+                value={customer.name}
+                onChange={(e) => onChange({ ...customer, name: e.target.value })}
+              />
+            </div>
+
+            {/* Phone Number
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                value={customer.phoneNumber}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 10) {
+                    onChange({ ...customer, phoneNumber: value });
+                  }
+                }}
+                maxLength={10}
+              />
+            </div> */}
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
+                value={customer.email}
+                onChange={(e) => onChange({ ...customer, email: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number *</Label>
+
+            {/* Address */}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-address">Address</Label>
               <Input
-                id="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                required
+                id="edit-address"
+                value={customer.address}
+                onChange={(e) => onChange({ ...customer, address: e.target.value })}
               />
             </div>
+
+            {/* Date of Birth */}
             <div className="space-y-2">
-              <Label htmlFor="aadharNumber">Aadhar Number *</Label>
+              <Label htmlFor="edit-dob">Date of Birth</Label>
               <Input
-                id="aadharNumber"
-                value={formData.aadharNumber}
-                onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth *</Label>
-              <Input
-                id="dob"
+                id="edit-dob"
                 type="date"
-                value={formData.dob}
-                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                required
+                value={customer.dob}
+                onChange={(e) => onChange({ ...customer, dob: e.target.value })}
               />
             </div>
-            {/* REMOVED: Account Number input field */}
+
+            {/* Customer PIN */}
             <div className="space-y-2">
-              <Label htmlFor="status">Status *</Label>
+              <Label htmlFor="edit-pin">Customer PIN</Label>
+              <Input
+                id="edit-pin"
+                type="password"
+                value={customer.customerPin || ''}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 6) {
+                    onChange({ ...customer, customerPin: value });
+                  }
+                }}
+                placeholder="6-digit PIN"
+                maxLength={6}
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
               <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
+                value={customer.status}
+                onValueChange={(value) => onChange({ ...customer, status: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -111,25 +143,17 @@ export const CustomerEditModal = ({ customer, open, onClose, onSave, loading = f
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="address">Address *</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                required
-              />
-            </div>
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Updating...
                 </>
               ) : (
                 'Save Changes'

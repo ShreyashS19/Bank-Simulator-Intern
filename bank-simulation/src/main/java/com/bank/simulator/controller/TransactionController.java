@@ -245,7 +245,7 @@ public class TransactionController {
                     .build();
             
         } catch (Exception e) {
-            System.err.println("❌ Error generating Excel file: " + e.getMessage());
+            System.err.println(" Error generating Excel file: " + e.getMessage());
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error("Failed to generate Excel file: " + e.getMessage()))
@@ -255,6 +255,31 @@ public class TransactionController {
     }
 
     
+    @GET
+    @Path("/all")
+    public Response getAllTransactions() {
+        try {
+            System.out.println("\n=== GET ALL TRANSACTIONS REQUEST ===");
+            
+            List<Transaction> transactions = transactionService.getAllTransactions();
+            
+            System.out.println("=== TRANSACTIONS RETRIEVED SUCCESSFULLY ===");
+            System.out.println("Total Transactions: " + transactions.size());
+            
+            return Response.ok(ApiResponse.success("Transactions retrieved successfully", transactions))
+                .build();
+                
+        } catch (Exception e) {
+            System.err.println("=== EXCEPTION IN FETCHING ALL TRANSACTIONS ===");
+            System.err.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
+        }
+    }
+
     @GET
     @Path("/download/{accountNumber}")
     @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

@@ -13,6 +13,8 @@ export interface Account {
   bankName: string;
   nameOnAccount: string;
   status: string;
+  created?: string;
+  modified?: string;
 }
 
 export interface ApiResponse<T> {
@@ -25,48 +27,83 @@ export interface ApiResponse<T> {
 export const accountService = {
   getAllAccounts: async (): Promise<Account[]> => {
     try {
-      const response = await axios.get<ApiResponse<Account[]>>(`${API_BASE_URL}/account`);
+      console.log(' Fetching all accounts');
+      const response = await axios.get<ApiResponse<Account[]>>(`${API_BASE_URL}/account/all`);
+      console.log(' Accounts fetched:', response.data.data.length);
       return response.data.data;
-    } catch (error) {
-      console.error('Error fetching accounts:', error);
+    } catch (error: any) {
+      console.error(' Error fetching accounts:', error);
       throw error;
     }
   },
 
   getAccountByNumber: async (accountNumber: string): Promise<Account> => {
     try {
-      const response = await axios.get<ApiResponse<Account>>(`${API_BASE_URL}/account/number/${accountNumber}`);
+      console.log(' Fetching account by number:', accountNumber);
+      const response = await axios.get<ApiResponse<Account>>(
+        `${API_BASE_URL}/account/number/${accountNumber}`
+      );
+      console.log(' Account found:', response.data.data);
       return response.data.data;
-    } catch (error) {
-      console.error('Error fetching account:', error);
+    } catch (error: any) {
+      console.error(' Error fetching account:', error);
       throw error;
     }
   },
 
-  createAccount: async (account: Omit<Account, 'accountId'>): Promise<string> => {
+  createAccount: async (account: Omit<Account, 'accountId' | 'customerId'>): Promise<string> => {
     try {
-      const response = await axios.post<ApiResponse<string>>(`${API_BASE_URL}/account/add`, account);
+      console.log('==========  CREATING ACCOUNT ==========');
+      console.log('API URL:', `${API_BASE_URL}/account/add`);
+      console.log('Payload:', JSON.stringify(account, null, 2));
+      
+      const response = await axios.post<ApiResponse<string>>(`${API_BASE_URL}/account/add`, account,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+      console.log(' Account created! ', response.data.data);
       return response.data.data;
-    } catch (error) {
-      console.error('Error creating account:', error);
+    } catch (error: any) {
+      console.error(' Error creating account:', error.response?.data || error);
       throw error;
     }
   },
 
   updateAccount: async (accountNumber: string, account: Partial<Account>): Promise<void> => {
     try {
-      await axios.put(`${API_BASE_URL}/account/number/${accountNumber}`, account);
-    } catch (error) {
-      console.error('Error updating account:', error);
+      console.log('==========  UPDATING ACCOUNT ==========');
+      console.log('Account Number:', accountNumber);
+      console.log('API URL:', `${API_BASE_URL}/account/number/${accountNumber}`);
+      
+      await axios.put(
+        `${API_BASE_URL}/account/number/${accountNumber}`,
+        account,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log(' Account updated successfully');
+    } catch (error: any) {
+      console.error(' Error updating account:', error);
       throw error;
     }
   },
 
   deleteAccount: async (accountNumber: string): Promise<void> => {
     try {
+      console.log(' Deleting account by number:', accountNumber);
       await axios.delete(`${API_BASE_URL}/account/number/${accountNumber}`);
-    } catch (error) {
-      console.error('Error deleting account:', error);
+      console.log(' Account deleted successfully');
+    } catch (error: any) {
+      console.error(' Error deleting account:', error);
       throw error;
     }
   }

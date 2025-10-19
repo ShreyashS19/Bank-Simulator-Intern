@@ -1,6 +1,7 @@
 package com.bank.simulator.service;
 
 import com.bank.simulator.model.Account;
+import java.util.List;
 
 public interface AccountService {
    
@@ -22,4 +23,5 @@ public interface AccountService {
     
     
     String generateAccountId();
+     List<Account> getAllAccounts();
 }

@@ -6,22 +6,22 @@ import com.bank.simulator.service.AccountService;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.ArrayList;
+
 
 public class AccountServiceImpl implements AccountService {
     private static final AtomicInteger accountCounter;
     
-    // Static initialization block - runs once when class is loaded
     static {
         accountCounter = new AtomicInteger(getMaxAccountIdFromDB() + 1);
         System.out.println("=== ACCOUNT SERVICE INITIALIZED ===");
         System.out.println("Starting account counter at: " + accountCounter.get());
     }
     
-    /**
-     * Queries database to find the highest existing account ID number
-     * and returns it so the counter can start from the next available ID
-     */
+   
     private static int getMaxAccountIdFromDB() {
         String query = "SELECT MAX(CAST(SUBSTRING(account_id, 5) AS UNSIGNED)) as max_id FROM Account";
         
@@ -32,7 +32,7 @@ public class AccountServiceImpl implements AccountService {
             
             if (rs.next()) {
                 int maxId = rs.getInt("max_id");
-                System.out.println("✓ Loaded max account ID from database: " + maxId);
+                System.out.println(" Loaded max account ID from database: " + maxId);
                 return maxId;
             }
         } catch (SQLException e) {
@@ -41,7 +41,7 @@ public class AccountServiceImpl implements AccountService {
             System.err.println("Starting counter from 0 (first ID will be ACC_1)");
         }
         
-        return 0; // Start from 1 if no accounts exist or on error
+        return 0;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AccountServiceImpl implements AccountService {
         
         if (customerInfo.startsWith("ERROR:")) {
             System.err.println("Error: " + customerInfo);
-            return customerInfo; // Return error code
+            return customerInfo; 
         }
         
         account.setCustomerId(customerInfo);
@@ -513,4 +513,48 @@ public class AccountServiceImpl implements AccountService {
     public String generateAccountId() {
         return "ACC_" + accountCounter.getAndIncrement();
     }
+
+    @Override
+public List<Account> getAllAccounts() {
+    String query = """
+        SELECT a.*, c.phone_number as customer_phone 
+        FROM Account a 
+        JOIN Customer c ON a.customer_id = c.customer_id 
+        ORDER BY a.created DESC
+    """;
+    
+    List<Account> accounts = new ArrayList<>();
+    
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query);
+         ResultSet rs = stmt.executeQuery()) {
+        
+        while (rs.next()) {
+            Account account = new Account();
+            account.setAccountId(rs.getString("account_id"));
+            account.setCustomerId(rs.getString("customer_id"));
+            account.setAccountNumber(rs.getString("account_number"));
+            account.setAadharNumber(rs.getString("aadhar_number"));
+            account.setIfscCode(rs.getString("ifsc_code"));
+            account.setPhoneNumberLinked(rs.getString("phone_number_linked"));
+            account.setAmount(rs.getBigDecimal("amount"));
+            account.setBankName(rs.getString("bank_name"));
+            account.setNameOnAccount(rs.getString("name_on_account"));
+            account.setStatus(rs.getString("status"));
+            account.setCreated(rs.getTimestamp("created").toLocalDateTime());
+            account.setModified(rs.getTimestamp("modified").toLocalDateTime());
+            
+            accounts.add(account);
+        }
+        
+        System.out.println("Retrieved " + accounts.size() + " accounts from database");
+        return accounts;
+        
+    } catch (SQLException e) {
+        System.err.println(" Error retrieving all accounts: " + e.getMessage());
+        e.printStackTrace();
+        return new ArrayList<>();
+    }
+}
+
 }

@@ -9,8 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Search, CreditCard, Loader2, Eye, Edit, Trash2 } from "lucide-react";
-import { Account } from "@/data/dummyAccounts";
-import { accountApi } from "@/services/dummyApi";
+import { accountService, Account } from "@/services/accountService";
 import { AccountViewModal } from "@/components/AccountViewModal";
 import { AccountEditModal } from "@/components/AccountEditModal";
 
@@ -25,14 +24,13 @@ const Accounts = () => {
   const [viewingAccount, setViewingAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState({
     accountNumber: "",
-    customerName: "",
-    accountType: "Savings" as "Savings" | "Current",
-    balance: "",
     aadharNumber: "",
     ifscCode: "",
+    phoneNumberLinked: "",
+    amount: "0.00",
     bankName: "",
     nameOnAccount: "",
-    status: "active"
+    status: "ACTIVE"
   });
 
   const handleSearch = async () => {
@@ -40,21 +38,25 @@ const Accounts = () => {
       toast.error("Please enter an account number");
       return;
     }
-    
+
     setIsSearching(true);
     setSearchNotFound(false);
     setSearchedAccount(null);
     
     try {
-      const account = await accountApi.getByAccountNumber(accountSearch.trim());
+      const account = await accountService.getAccountByNumber(accountSearch.trim());
       if (account) {
         setSearchedAccount(account);
-      } else {
-        setSearchNotFound(true);
+        toast.success("Account found!");
       }
-    } catch (error) {
-      toast.error("Failed to search account");
-      console.error(error);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setSearchNotFound(true);
+        toast.error("Account not found");
+      } else {
+        toast.error("Failed to search account");
+        console.error(error);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -63,38 +65,73 @@ const Accounts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
-      await accountApi.create({
-        ...formData,
-        balance: parseFloat(formData.balance)
-      });
-      toast.success("Account created successfully!");
+      const accountData = {
+        accountNumber: formData.accountNumber.trim(),
+        aadharNumber: formData.aadharNumber.trim(),
+        ifscCode: formData.ifscCode.trim().toUpperCase(),
+        phoneNumberLinked: formData.phoneNumberLinked.trim(),
+        amount: parseFloat(formData.amount),
+        bankName: formData.bankName.trim(),
+        nameOnAccount: formData.nameOnAccount.trim(),
+        status: formData.status
+      };
+
+      const accountId = await accountService.createAccount(accountData);
+      
+      console.log('✅ Account created successfully! ID:', accountId);
+      toast.success(`Account created successfully! ID: ${accountId}`);
+      
       handleReset();
-      // Clear search results after creating a new account
       setSearchedAccount(null);
       setAccountSearch("");
       setSearchNotFound(false);
-    } catch (error) {
-      toast.error("Failed to create account");
-      console.error(error);
+    } catch (error: any) {
+      console.error('❌ Account creation failed:', error);
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response?.status === 400) {
+        toast.error('Validation failed. Please check all required fields.');
+      } else {
+        toast.error('Failed to create account. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEdit = async (account: Account) => {
+    if (!account.accountNumber) {
+      toast.error("Account number is missing. Cannot update account.");
+      return;
+    }
+    
     setIsLoading(true);
+    
     try {
-      await accountApi.update(account.id, account);
+      await accountService.updateAccount(account.accountNumber, account);
+      
       toast.success("Account updated successfully!");
       setEditingAccount(null);
-      // Refresh the searched account data
-      if (searchedAccount?.id === account.id) {
-        setSearchedAccount(account);
+      
+      if (searchedAccount?.accountNumber === account.accountNumber) {
+        try {
+          const updatedAccount = await accountService.getAccountByNumber(account.accountNumber);
+          setSearchedAccount(updatedAccount);
+        } catch (error) {
+          console.warn('Could not refresh account data');
+        }
       }
-    } catch (error) {
-      toast.error("Failed to update account");
-      console.error(error);
+    } catch (error: any) {
+      console.error('❌ Update failed:', error);
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to update account');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -104,16 +141,20 @@ const Accounts = () => {
     if (!deletingAccount) return;
     setIsLoading(true);
     try {
-      await accountApi.delete(deletingAccount.id);
+      await accountService.deleteAccount(deletingAccount.accountNumber);
       toast.success("Account deleted successfully!");
       setDeletingAccount(null);
-      // Clear search results if the deleted account was being displayed
-      if (searchedAccount?.id === deletingAccount.id) {
+      
+      if (searchedAccount?.accountNumber === deletingAccount.accountNumber) {
         setSearchedAccount(null);
         setAccountSearch("");
       }
-    } catch (error) {
-      toast.error("Failed to delete account");
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to delete account");
+      }
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -123,17 +164,15 @@ const Accounts = () => {
   const handleReset = () => {
     setFormData({
       accountNumber: "",
-      customerName: "",
-      accountType: "Savings",
-      balance: "",
       aadharNumber: "",
       ifscCode: "",
+      phoneNumberLinked: "",
+      amount: "0.00",
       bankName: "",
       nameOnAccount: "",
-      status: "active"
+      status: "ACTIVE"
     });
   };
-
 
   return (
     <DashboardLayout>
@@ -155,82 +194,98 @@ const Accounts = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Label htmlFor="accountNumber">Account Number <span className="text-red-500">*</span></Label>
                   <Input
                     id="accountNumber"
                     value={formData.accountNumber}
                     onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                    placeholder="10-25 digit account number"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="customerName">Customer Name</Label>
-                  <Input
-                    id="customerName"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nameOnAccount">Name on Account</Label>
+                  <Label htmlFor="nameOnAccount">Name on Account <span className="text-red-500">*</span></Label>
                   <Input
                     id="nameOnAccount"
                     value={formData.nameOnAccount}
                     onChange={(e) => setFormData({ ...formData, nameOnAccount: e.target.value })}
+                    placeholder="Account holder name"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="accountType">Account Type</Label>
-                  <Select value={formData.accountType} onValueChange={(value: "Savings" | "Current") => setFormData({ ...formData, accountType: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Savings">Savings</SelectItem>
-                      <SelectItem value="Current">Current</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="balance">Balance</Label>
-                  <Input
-                    id="balance"
-                    type="number"
-                    step="0.01"
-                    value={formData.balance}
-                    onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="aadharNumber">Aadhar Number</Label>
+                  <Label htmlFor="aadharNumber">Aadhar Number <span className="text-red-500">*</span></Label>
                   <Input
                     id="aadharNumber"
                     value={formData.aadharNumber}
-                    onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 12) {
+                        setFormData({ ...formData, aadharNumber: value });
+                      }
+                    }}
+                    placeholder="12-digit Aadhar number"
                     required
+                    maxLength={12}
                   />
                 </div>
+                
+                {/* <div className="space-y-2">
+                  <Label htmlFor="phoneNumberLinked">Phone Number <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="phoneNumberLinked"
+                    value={formData.phoneNumberLinked}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 10) {
+                        setFormData({ ...formData, phoneNumberLinked: value });
+                      }
+                    }}
+                    placeholder="10-digit mobile number"
+                    required
+                    maxLength={10}
+                  />
+                </div> */}
+                
                 <div className="space-y-2">
-                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Label htmlFor="bankName">Bank Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="bankName"
                     value={formData.bankName}
                     onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                    placeholder="e.g., State Bank of India"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="ifscCode">IFSC Code</Label>
+                  <Label htmlFor="ifscCode">IFSC Code <span className="text-red-500">*</span></Label>
                   <Input
                     id="ifscCode"
                     value={formData.ifscCode}
-                    onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
+                    placeholder="e.g., SBIN0001234"
+                    required
+                    maxLength={11}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Initial Balance <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="Minimum 0.00"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
@@ -238,17 +293,27 @@ const Accounts = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+              
               <div className="flex gap-3">
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating...</> : "Create Account"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
+                <Button type="button" variant="outline" onClick={handleReset}>
+                  Reset
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -265,7 +330,7 @@ const Accounts = () => {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Enter Account Number (e.g., ACC001234567890)"
+                  placeholder="Enter Account Number"
                   value={accountSearch}
                   onChange={(e) => setAccountSearch(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -273,7 +338,17 @@ const Accounts = () => {
                 />
               </div>
               <Button onClick={handleSearch} disabled={isSearching}>
-                {isSearching ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Searching...</> : <><Search className="h-4 w-4 mr-2" /> Search</>}
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </>
+                )}
               </Button>
             </div>
 
@@ -293,28 +368,12 @@ const Accounts = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <Label className="text-muted-foreground">Account ID</Label>
-                      <p className="font-medium">{searchedAccount.id}</p>
-                    </div>
-                    <div>
                       <Label className="text-muted-foreground">Account Number</Label>
                       <p className="font-medium">{searchedAccount.accountNumber}</p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Customer Name</Label>
-                      <p className="font-medium">{searchedAccount.customerName}</p>
-                    </div>
-                    <div>
                       <Label className="text-muted-foreground">Name on Account</Label>
                       <p className="font-medium">{searchedAccount.nameOnAccount}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Account Type</Label>
-                      <p className="font-medium">{searchedAccount.accountType}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Balance</Label>
-                      <p className="font-medium">₹{searchedAccount.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Bank Name</Label>
@@ -325,8 +384,8 @@ const Accounts = () => {
                       <p className="font-medium">{searchedAccount.ifscCode}</p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Aadhaar Number</Label>
-                      <p className="font-medium">{searchedAccount.aadharNumber}</p>
+                      <Label className="text-muted-foreground">Balance</Label>
+                      <p className="font-medium">₹{searchedAccount.amount.toLocaleString()}</p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Status</Label>
@@ -370,7 +429,6 @@ const Accounts = () => {
         onChange={(account) => setEditingAccount(account)}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deletingAccount} onOpenChange={() => setDeletingAccount(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -382,7 +440,14 @@ const Accounts = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deleting...</> : "Delete"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

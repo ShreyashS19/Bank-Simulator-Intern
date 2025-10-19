@@ -9,8 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Search, UserPlus, Loader2, Eye, Edit, Trash2 } from "lucide-react";
-import { Customer } from "@/data/dummyCustomers";
-import { customerApi } from "@/services/dummyApi";
+import { customerService, Customer } from "@/services/customerService";
 import { CustomerViewModal } from "@/components/CustomerViewModal";
 import { CustomerEditModal } from "@/components/CustomerEditModal";
 
@@ -31,12 +30,18 @@ const Customers = () => {
     customerPin: "",
     aadharNumber: "",
     dob: "",
-    status: "active"
+    status: "Inactive"
   });
 
   const handleSearch = async () => {
     if (!aadharSearch.trim()) {
       toast.error("Please enter an Aadhaar number");
+      return;
+    }
+
+    // Validate Aadhar format (12 digits)
+    if (!aadharSearch.trim().match(/^\d{12}$/)) {
+      toast.error("Aadhaar number must be exactly 12 digits");
       return;
     }
     
@@ -45,15 +50,19 @@ const Customers = () => {
     setSearchedCustomer(null);
     
     try {
-      const customer = await customerApi.getByAadharNumber(aadharSearch.trim());
+      const customer = await customerService.getCustomerByAadhar(aadharSearch.trim());
       if (customer) {
         setSearchedCustomer(customer);
-      } else {
-        setSearchNotFound(true);
+        toast.success("Customer found!");
       }
-    } catch (error) {
-      toast.error("Failed to search customer");
-      console.error(error);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setSearchNotFound(true);
+        toast.error("Customer not found");
+      } else {
+        toast.error("Failed to search customer");
+        console.error(error);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -62,54 +71,202 @@ const Customers = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
-      await customerApi.create(formData);
-      toast.success("Customer created successfully!");
+      console.log('📤 Submitting customer creation...');
+      
+      // Frontend validation
+      if (!formData.name.trim()) {
+        toast.error("Name is required");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData.phoneNumber.match(/^[1-9][0-9]{9}$/)) {
+        toast.error("Phone number must be 10 digits and cannot start with 0");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData.email.trim().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        toast.error("Invalid email format");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData.customerPin.match(/^\d{6}$/)) {
+        toast.error("Customer PIN must be exactly 6 digits");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData.aadharNumber.match(/^\d{12}$/)) {
+        toast.error("Aadhar number must be exactly 12 digits");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData.dob) {
+        toast.error("Date of birth is required");
+        setIsLoading(false);
+        return;
+      }
+
+      // Prepare data for backend
+      const customerData = {
+        name: formData.name.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim(),
+        customerPin: formData.customerPin.trim(),
+        aadharNumber: formData.aadharNumber.trim(),
+        dob: formData.dob,
+        status: formData.status
+      };
+
+      const customerId = await customerService.createCustomer(customerData);
+      
+      console.log('✅ Customer created successfully! ID:', customerId);
+      toast.success(`Customer created successfully! ID: ${customerId}`);
+      
       handleReset();
-      // Clear search results after creating a new customer
       setSearchedCustomer(null);
       setAadharSearch("");
       setSearchNotFound(false);
-    } catch (error) {
-      toast.error("Failed to create customer");
-      console.error(error);
+    } catch (error: any) {
+      console.error('❌ Customer creation failed:', error);
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response?.status === 400) {
+        toast.error('Validation failed. Please check all required fields.');
+      } else if (error.code === 'ERR_NETWORK') {
+        toast.error('Cannot connect to server. Ensure backend is running on http://localhost:8080');
+      } else {
+        toast.error('Failed to create customer. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEdit = async (customer: Customer) => {
-    setIsLoading(true);
-    try {
-      await customerApi.update(customer.id, customer);
-      toast.success("Customer updated successfully!");
-      setEditingCustomer(null);
-      // Refresh the searched customer data
-      if (searchedCustomer?.id === customer.id) {
-        setSearchedCustomer(customer);
+  // const handleEdit = async (customer: Customer) => {
+  //   if (!customer.customerId) {
+  //     toast.error("Customer ID is missing. Cannot update customer.");
+  //     return;
+  //   }
+    
+  //   if (!customer.customerPin || customer.customerPin.length !== 6) {
+  //     toast.error("Please enter your 6-digit PIN to confirm changes");
+  //     return;
+  //   }
+    
+  //   setIsLoading(true);
+    
+  //   try {
+  //     console.log('📝 Updating customer:', customer.customerId);
+      
+  //     await customerService.updateCustomer(customer.customerId, customer);
+      
+  //     toast.success("Customer updated successfully!");
+  //     setEditingCustomer(null);
+      
+  //     // Refresh the searched customer data if it's the same one
+  //     if (searchedCustomer?.customerId === customer.customerId) {
+  //       try {
+  //         const updatedCustomer = await customerService.getCustomerByAadhar(customer.aadharNumber);
+  //         setSearchedCustomer(updatedCustomer);
+  //       } catch (error) {
+  //         console.warn('Could not refresh customer data');
+  //       }
+  //     }
+  //   } catch (error: any) {
+  //     console.error('❌ Update failed:', error);
+      
+  //     if (error.response?.data?.message) {
+  //       toast.error(error.response.data.message);
+  //     } else if (error.response?.status === 400) {
+  //       toast.error('Validation failed. Check all fields and try again.');
+  //     } else if (error.response?.status === 404) {
+  //       toast.error('Customer not found');
+  //     } else {
+  //       toast.error('Failed to update customer');
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+const handleEdit = async (customer: Customer) => {
+  // Validate that Aadhar number exists (this is our identifier)
+  if (!customer.aadharNumber || customer.aadharNumber.length !== 12) {
+    toast.error("Aadhar number is missing or invalid. Cannot update customer.");
+    return;
+  }
+  
+  // Validate PIN
+  if (!customer.customerPin || customer.customerPin.length !== 6) {
+    toast.error("Please enter your 6-digit PIN to confirm changes");
+    return;
+  }
+  
+  setIsLoading(true);
+  
+  try {
+    console.log('📝 Updating customer via Aadhar:', customer.aadharNumber);
+    
+    // Use Aadhar number as identifier (Customer ID is never exposed to user)
+    await customerService.updateCustomerByAadhar(customer.aadharNumber, customer);
+    
+    toast.success("Customer updated successfully!");
+    setEditingCustomer(null);
+    
+    // Refresh the searched customer data if it's the same one
+    if (searchedCustomer?.aadharNumber === customer.aadharNumber) {
+      try {
+        const updatedCustomer = await customerService.getCustomerByAadhar(customer.aadharNumber);
+        setSearchedCustomer(updatedCustomer);
+      } catch (error) {
+        console.warn('Could not refresh customer data');
       }
-    } catch (error) {
-      toast.error("Failed to update customer");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error: any) {
+    console.error('❌ Update failed:', error);
+    
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else if (error.response?.status === 400) {
+      toast.error('Validation failed. Check all fields and try again.');
+    } else if (error.response?.status === 404) {
+      toast.error('Customer not found with this Aadhar number');
+    } else if (error.message.includes('Customer ID is missing')) {
+      toast.error('Unable to identify customer. Please try searching again.');
+    } else {
+      toast.error('Failed to update customer');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleDelete = async () => {
     if (!deletingCustomer) return;
     setIsLoading(true);
     try {
-      await customerApi.delete(deletingCustomer.id);
+      await customerService.deleteCustomer(deletingCustomer.aadharNumber);
       toast.success("Customer deleted successfully!");
       setDeletingCustomer(null);
+      
       // Clear search results if the deleted customer was being displayed
-      if (searchedCustomer?.id === deletingCustomer.id) {
+      if (searchedCustomer?.aadharNumber === deletingCustomer.aadharNumber) {
         setSearchedCustomer(null);
         setAadharSearch("");
       }
-    } catch (error) {
-      toast.error("Failed to delete customer");
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to delete customer");
+      }
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -125,10 +282,9 @@ const Customers = () => {
       customerPin: "",
       aadharNumber: "",
       dob: "",
-      status: "active"
+      status: "Inactive"
     });
   };
-
 
   return (
     <DashboardLayout>
@@ -150,72 +306,102 @@ const Customers = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter full name"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber">Phone Number <span className="text-red-500">*</span></Label>
                   <Input
                     id="phoneNumber"
                     value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 10) {
+                        setFormData({ ...formData, phoneNumber: value });
+                      }
+                    }}
+                    placeholder="10-digit mobile number"
                     required
+                    maxLength={10}
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="email@example.com"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
                   <Input
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Enter address"
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="customerPin">Customer PIN</Label>
+                  <Label htmlFor="customerPin">Customer PIN <span className="text-red-500">*</span></Label>
                   <Input
                     id="customerPin"
                     type="password"
                     value={formData.customerPin}
-                    onChange={(e) => setFormData({ ...formData, customerPin: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 6) {
+                        setFormData({ ...formData, customerPin: value });
+                      }
+                    }}
+                    placeholder="6-digit PIN"
                     required
+                    maxLength={6}
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNumber">Aadhar Number</Label>
+                  <Label htmlFor="aadharNumber">Aadhar Number <span className="text-red-500">*</span></Label>
                   <Input
                     id="aadharNumber"
                     value={formData.aadharNumber}
-                    onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 12) {
+                        setFormData({ ...formData, aadharNumber: value });
+                      }
+                    }}
+                    placeholder="12-digit Aadhar number"
                     required
+                    maxLength={12}
                   />
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
                   <Input
                     id="dob"
                     type="date"
                     value={formData.dob}
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                     required
                   />
                 </div>
-                
                 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
@@ -224,17 +410,27 @@ const Customers = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+              
               <div className="flex gap-3">
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating...</> : "Create Customer"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Customer"
+                  )}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
+                <Button type="button" variant="outline" onClick={handleReset}>
+                  Reset
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -251,15 +447,31 @@ const Customers = () => {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Enter Aadhaar Number (e.g., 1234 5678 9012)"
+                  placeholder="Enter 12-digit Aadhaar Number"
                   value={aadharSearch}
-                  onChange={(e) => setAadharSearch(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 12) {
+                      setAadharSearch(value);
+                    }
+                  }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   className="pl-9"
+                  maxLength={12}
                 />
               </div>
               <Button onClick={handleSearch} disabled={isSearching}>
-                {isSearching ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Searching...</> : <><Search className="h-4 w-4 mr-2" /> Search</>}
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </>
+                )}
               </Button>
             </div>
 
@@ -278,10 +490,12 @@ const Customers = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <Label className="text-muted-foreground">ID</Label>
-                      <p className="font-medium">{searchedCustomer.id}</p>
-                    </div>
+                    {searchedCustomer.customerId && (
+                      <div>
+                        <Label className="text-muted-foreground">Customer ID</Label>
+                        <p className="font-medium">{searchedCustomer.customerId}</p>
+                      </div>
+                    )}
                     <div>
                       <Label className="text-muted-foreground">Name</Label>
                       <p className="font-medium">{searchedCustomer.name}</p>
@@ -303,7 +517,8 @@ const Customers = () => {
                       <p className="font-medium">{new Date(searchedCustomer.dob).toLocaleDateString()}</p>
                     </div>
                     <div>
-                      
+                      <Label className="text-muted-foreground">Address</Label>
+                      <p className="font-medium">{searchedCustomer.address}</p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Status</Label>
@@ -359,7 +574,14 @@ const Customers = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deleting...</> : "Delete"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

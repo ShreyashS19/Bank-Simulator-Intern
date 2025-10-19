@@ -1,9 +1,178 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CreditCard, ArrowLeftRight, TrendingUp } from "lucide-react";
+import { Users, CreditCard, ArrowLeftRight, TrendingUp, Loader2 } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { customerService } from "@/services/customerService";
+import { accountService } from "@/services/accountService";
+import { transactionService } from "@/services/transactionService";
 
 const Dashboard = () => {
+  const [stats, setStats] = useState({
+    totalCustomers: 0,
+    activeAccounts: 0,
+    totalTransactions: 0,
+    totalVolume: 0,
+    totalVolumeRaw: 0
+  });
+  const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [balanceDistribution, setBalanceDistribution] = useState<any[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🔄 Loading dashboard data...');
+      
+      // Fetch all data from backend
+      const customers = await customerService.getAllCustomers();
+      const accounts = await accountService.getAllAccounts();
+      const transactions = await transactionService.getAllTransactions();
+      
+      console.log('📊 Data loaded:');
+      console.log('- Customers:', customers.length);
+      console.log('- Accounts:', accounts.length);
+      console.log('- Transactions:', transactions.length);
+      
+      // Calculate active accounts
+      const activeAccounts = accounts.filter(acc => 
+        acc.status && acc.status.toUpperCase() === 'ACTIVE'
+      );
+      
+      // Calculate total transaction volume
+      const totalVolume = transactions.reduce((sum, txn) => 
+        sum + Number(txn.amount || 0), 0
+      );
+      
+      console.log('💰 Total Transaction Volume:', totalVolume);
+
+      // Calculate transactions per day of week
+      const dayMap = new Map([
+        ['Sunday', 0],
+        ['Monday', 0],
+        ['Tuesday', 0],
+        ['Wednesday', 0],
+        ['Thursday', 0],
+        ['Friday', 0],
+        ['Saturday', 0]
+      ]);
+
+      transactions.forEach(txn => {
+        if (txn.createdDate) {
+          const date = new Date(txn.createdDate);
+          const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+          dayMap.set(dayName, (dayMap.get(dayName) || 0) + 1);
+        }
+      });
+
+      const weeklyChartData = [
+        { day: "Mon", transactions: dayMap.get('Monday') || 0 },
+        { day: "Tue", transactions: dayMap.get('Tuesday') || 0 },
+        { day: "Wed", transactions: dayMap.get('Wednesday') || 0 },
+        { day: "Thu", transactions: dayMap.get('Thursday') || 0 },
+        { day: "Fri", transactions: dayMap.get('Friday') || 0 },
+        { day: "Sat", transactions: dayMap.get('Saturday') || 0 },
+        { day: "Sun", transactions: dayMap.get('Sunday') || 0 },
+      ];
+
+      // Calculate balance distribution by bank type
+      const bankTypeMap = new Map<string, number>();
+      accounts.forEach(acc => {
+        const bankName = acc.bankName || 'Other';
+        const normalizedName = bankName.toLowerCase();
+        
+        let category = 'Other';
+        if (normalizedName.includes('savings') || normalizedName.includes('sbi') || normalizedName.includes('state bank')) {
+          category = 'Savings';
+        } else if (normalizedName.includes('current') || normalizedName.includes('hdfc') || normalizedName.includes('icici')) {
+          category = 'Current';
+        } else if (normalizedName.includes('fixed') || normalizedName.includes('fd') || normalizedName.includes('axis')) {
+          category = 'Fixed';
+        }
+        
+        bankTypeMap.set(category, (bankTypeMap.get(category) || 0) + 1);
+      });
+
+      const balanceData = Array.from(bankTypeMap.entries())
+        .map(([name, value]) => ({ name, value }))
+        .filter(item => item.value > 0);
+
+      // Calculate transaction trend (last 30 days by week)
+      const now = new Date();
+      const weekBuckets = [
+        { label: 'Week 1', start: 21, end: 30, amount: 0 },
+        { label: 'Week 2', start: 14, end: 21, amount: 0 },
+        { label: 'Week 3', start: 7, end: 14, amount: 0 },
+        { label: 'Week 4', start: 0, end: 7, amount: 0 }
+      ];
+
+      transactions.forEach(txn => {
+        if (txn.createdDate) {
+          const txnDate = new Date(txn.createdDate);
+          const daysAgo = Math.floor((now.getTime() - txnDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysAgo >= 0 && daysAgo < 30) {
+            for (const bucket of weekBuckets) {
+              if (daysAgo >= bucket.start && daysAgo < bucket.end) {
+                bucket.amount += Number(txn.amount || 0);
+                break;
+              }
+            }
+          }
+        }
+      });
+
+      const trendData = weekBuckets.reverse().map(bucket => ({
+        date: bucket.label,
+        amount: bucket.amount
+      }));
+
+      console.log('📈 Weekly trend data:', trendData);
+
+      setStats({
+        totalCustomers: customers.length,
+        activeAccounts: activeAccounts.length,
+        totalTransactions: transactions.length,
+        totalVolume: totalVolume / 1000000,
+        totalVolumeRaw: totalVolume
+      });
+      
+      setWeeklyData(weeklyChartData);
+      setBalanceDistribution(balanceData.length > 0 ? balanceData : [{ name: 'No Data', value: 1 }]);
+      setMonthlyTrend(trendData);
+
+    } catch (error) {
+      console.error('❌ Error loading dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[600px]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))"];
+
+  const formatVolume = (raw: number) => {
+    if (raw === 0) return '₹0';
+    if (raw >= 10000000) return `₹${(raw / 10000000).toFixed(1)}Cr`;
+    if (raw >= 100000) return `₹${(raw / 100000).toFixed(1)}L`;
+    if (raw >= 1000) return `₹${(raw / 1000).toFixed(1)}K`;
+    return `₹${raw.toFixed(0)}`;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -20,7 +189,7 @@ const Dashboard = () => {
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,245</div>
+              <div className="text-2xl font-bold">{stats.totalCustomers.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <span className="text-secondary">+12%</span> from last month
               </p>
@@ -33,7 +202,7 @@ const Dashboard = () => {
               <CreditCard className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2,847</div>
+              <div className="text-2xl font-bold">{stats.activeAccounts.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <span className="text-secondary">+8%</span> from last month
               </p>
@@ -46,7 +215,7 @@ const Dashboard = () => {
               <ArrowLeftRight className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">15,672</div>
+              <div className="text-2xl font-bold">{stats.totalTransactions.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <span className="text-secondary">+23%</span> from last month
               </p>
@@ -59,7 +228,7 @@ const Dashboard = () => {
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹45.2M</div>
+              <div className="text-2xl font-bold">{formatVolume(stats.totalVolumeRaw)}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <span className="text-secondary">+15%</span> from last month
               </p>
@@ -75,7 +244,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={transactionData}>
+                <BarChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="day" />
                   <YAxis />
@@ -94,7 +263,7 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={balanceData}
+                    data={balanceDistribution}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -103,7 +272,7 @@ const Dashboard = () => {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {balanceData.map((entry, index) => (
+                    {balanceDistribution.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -121,11 +290,11 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={trendData}>
+              <LineChart data={monthlyTrend}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => `₹${Number(value).toLocaleString()}`} />
                 <Line type="monotone" dataKey="amount" stroke="hsl(var(--secondary))" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -135,31 +304,5 @@ const Dashboard = () => {
     </DashboardLayout>
   );
 };
-
-const transactionData = [
-  { day: "Mon", transactions: 120 },
-  { day: "Tue", transactions: 195 },
-  { day: "Wed", transactions: 147 },
-  { day: "Thu", transactions: 230 },
-  { day: "Fri", transactions: 285 },
-  { day: "Sat", transactions: 178 },
-  { day: "Sun", transactions: 142 },
-];
-
-const balanceData = [
-  { name: "Savings", value: 45 },
-  { name: "Current", value: 30 },
-  { name: "Fixed", value: 25 },
-];
-
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))"];
-
-const trendData = [
-  { date: "Jan 1", amount: 4000 },
-  { date: "Jan 8", amount: 3000 },
-  { date: "Jan 15", amount: 5000 },
-  { date: "Jan 22", amount: 4500 },
-  { date: "Jan 29", amount: 6000 },
-];
 
 export default Dashboard;

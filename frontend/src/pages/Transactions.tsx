@@ -91,16 +91,16 @@ const Transactions = () => {
         senderAccountNumber: formData.senderAccountNumber.trim(),
         receiverAccountNumber: formData.receiverAccountNumber.trim(),
         amount: parseFloat(formData.amount),
-        transactionType: "ONLINE", // Always ONLINE
+        transactionType: "ONLINE", 
         description: formData.description.trim() || undefined,
-        pin: formData.pin.trim()
+        pin: formData.pin.trim(),
+        timestamp: new Date().toISOString()
       };
 
       const transactionId = await transactionService.createTransaction(transactionData);
-      toast.success(`Transaction completed successfully! ID: ${transactionId}`);
+      toast.success(`Transaction completed successfully!`);
       handleReset();
 
-      // Refresh transactions if we're viewing the sender or receiver account
       if (searchAccountNumber === formData.senderAccountNumber || searchAccountNumber === formData.receiverAccountNumber) {
         handleSearchByAccount();
       }

@@ -69,7 +69,7 @@ const Login = () => {
       >
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            BankSim
+            Bank Simulation
           </Link>
         </div>
 

@@ -184,7 +184,6 @@ public class ExcelGeneratorService {
     private void autoSizeColumns(Sheet sheet, int numberOfColumns) {
         for (int i = 0; i < numberOfColumns; i++) {
             sheet.autoSizeColumn(i);
-            //extra width for padding
             sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1000);
         }
     }

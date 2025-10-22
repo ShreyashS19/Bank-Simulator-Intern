@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Account } from "@/services/accountService"; // ✅ Fixed import
+import { Account } from "@/services/accountService"; 
 import { Loader2 } from "lucide-react";
 
 interface AccountEditModalProps {
@@ -134,7 +134,7 @@ export const AccountEditModal = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  {/* <SelectItem value="INACTIVE">Inactive</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>

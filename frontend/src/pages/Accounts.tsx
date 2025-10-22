@@ -81,7 +81,7 @@ const Accounts = () => {
       const accountId = await accountService.createAccount(accountData);
       
       console.log('✅ Account created successfully! ID:', accountId);
-      toast.success(`Account created successfully! ID: ${accountId}`);
+      toast.success(`Account created successfully!`);
       
       handleReset();
       setSearchedAccount(null);
@@ -294,7 +294,7 @@ const Accounts = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      {/* <SelectItem value="INACTIVE">Inactive</SelectItem> */}
                     </SelectContent>
                   </Select>
                 </div>

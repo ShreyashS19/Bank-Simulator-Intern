@@ -12,7 +12,7 @@ public class Customer {
     private String email;
     private String address;
     
-    @JsonIgnore  // ← PIN will NOT appear in any API response
+    @JsonIgnore 
     private String customerPin;
     
     private String aadharNumber;

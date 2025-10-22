@@ -73,10 +73,10 @@ public class CustomerValidator {
                 result.addError(phoneUniqueValidation.getFirstErrorMessage(), "PHONE_EXISTS");
             }
             
-            ValidationResult emailUniqueValidation = validateEmailUniqueness(customer.getEmail());
-            if (!emailUniqueValidation.isValid()) {
-                result.addError(emailUniqueValidation.getFirstErrorMessage(), "EMAIL_EXISTS");
-            }
+            // ValidationResult emailUniqueValidation = validateEmailUniqueness(customer.getEmail());
+            // if (!emailUniqueValidation.isValid()) {
+            //     result.addError(emailUniqueValidation.getFirstErrorMessage(), "EMAIL_EXISTS");
+            // }
             
             ValidationResult aadharUniqueValidation = validateAadharNumberUniqueness(customer.getAadharNumber());
             if (!aadharUniqueValidation.isValid()) {
@@ -205,7 +205,7 @@ public class CustomerValidator {
                 return ValidationResult.failure("Email already exists");
             }
             
-            System.out.println("✓ Email is unique for update: " + email);
+            System.out.println(" Email is unique for update: " + email);
             return ValidationResult.success();
         } catch (SQLException e) {
             System.err.println("Error checking email uniqueness for update: " + e.getMessage());

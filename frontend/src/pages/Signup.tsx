@@ -111,14 +111,14 @@ const Signup = () => {
       >
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            BankSim
+            Bank Simulation
           </Link>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>Sign up to get started with BankSim</CardDescription>
+            <CardDescription>Sign up to get started with Bank Simulation</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

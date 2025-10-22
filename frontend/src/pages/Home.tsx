@@ -15,7 +15,7 @@ const Home = () => {
               animate={{ opacity: 1, x: 0 }}
               className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
             >
-              BankSim
+              Bank Simulation
             </motion.div>
             <div className="hidden md:flex items-center gap-8">
               <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
@@ -47,6 +47,7 @@ const Home = () => {
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Experience Digital Banking
+
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8">
               Simple, Smart, and Secure.
@@ -73,7 +74,7 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4">Why Choose BankSim?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose Bank Simulation?</h2>
             <p className="text-muted-foreground text-lg">Modern banking features designed for the digital age</p>
           </motion.div>
 
@@ -107,12 +108,12 @@ const Home = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-4xl font-bold mb-6">About BankSim</h2>
+              <h2 className="text-4xl font-bold mb-6">About Bank Simulation</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                BankSim is a modern banking simulation platform built with cutting-edge technology to provide a seamless digital banking experience.
+                Bank Simulation is a modern banking simulation platform built with cutting-edge technology to provide a seamless digital banking experience.
               </p>
               <p className="text-lg text-muted-foreground">
-                Our platform combines security, speed, and simplicity to help you manage your finances efficiently. Whether you're tracking transactions, managing accounts, or analyzing financial data, BankSim provides the tools you need.
+                Our platform combines security, speed, and simplicity to help you manage your finances efficiently. Whether you're tracking transactions, managing accounts, or analyzing financial data, Bank Simulation provides the tools you need.
               </p>
             </motion.div>
           </div>
@@ -131,8 +132,8 @@ const Home = () => {
             <h2 className="text-4xl font-bold mb-4">Get In Touch</h2>
             <p className="text-muted-foreground mb-8">Have questions? We'd love to hear from you.</p>
             <div className="flex justify-center gap-6">
-              <a href="mailto:contact@banksim.com" className="text-primary hover:text-secondary transition-colors">
-                contact@banksim.com
+              <a href="mailto:contact@Bank Simulation.com" className="text-primary hover:text-secondary transition-colors">
+                contact@Bank Simulation.com
               </a>
               <span className="text-muted-foreground">|</span>
               <a href="tel:+1234567890" className="text-primary hover:text-secondary transition-colors">
@@ -148,7 +149,7 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-muted-foreground">
-              © 2025 BankSim. All rights reserved.
+              © 2025 Bank Simulation. All rights reserved.
             </p>
             <div className="flex gap-4">
               <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">

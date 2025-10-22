@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
-import { Account } from "@/services/accountService"; // ✅ Updated import
+import { Account } from "@/services/accountService"; 
 import { motion } from "framer-motion";
 
 interface AccountTableProps {

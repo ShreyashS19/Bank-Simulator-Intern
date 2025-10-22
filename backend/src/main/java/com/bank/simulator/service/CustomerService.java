@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface CustomerService {
-    // Core CRUD operations
     String createCustomer(Customer customer);
     Customer getCustomerById(String customerId);
     boolean updateCustomer(String customerId, Customer customer);
@@ -13,8 +12,6 @@ public interface CustomerService {
      boolean deleteCustomerByAadhar(String aadharNumber);
     List<Customer> getAllCustomers();
     
-    
-    // Validation methods
    // boolean isPhoneNumberValid(String phoneNumber);
     boolean isPhoneNumberExists(String phoneNumber);
  //   boolean isEmailValid(String email);
@@ -24,7 +21,6 @@ public interface CustomerService {
     // boolean isPinValid(String pin);
     // boolean isAgeValid(LocalDate dob);
     
-    // ID generation
     String generateCustomerId();
     Customer getCustomerByAadharNumber(String aadharNumber);
 Customer getCustomerByPhoneNumber(String phoneNumber);

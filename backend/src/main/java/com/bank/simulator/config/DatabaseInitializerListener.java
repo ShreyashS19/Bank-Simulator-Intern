@@ -115,8 +115,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
-          // Add this to the createTablesIfNotExists() method in DatabaseInitializerListener.java
-
             String userTable = """
                 CREATE TABLE IF NOT EXISTS User (
                     id VARCHAR(50) PRIMARY KEY,

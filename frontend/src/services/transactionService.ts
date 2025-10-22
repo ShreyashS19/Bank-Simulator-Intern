@@ -3,6 +3,8 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/bank-simulator/api';
 
 export interface Transaction {
+  // status: any;
+   timestamp: string | number | Date;
   transactionId?: string;
   senderAccountNumber: string;
   receiverAccountNumber: string;
@@ -63,10 +65,10 @@ export const transactionService = {
   try {
     console.log('🔍 Fetching all transactions');
     const response = await axios.get<ApiResponse<Transaction[]>>(`${API_BASE_URL}/transaction/all`);
-    console.log('✅ Transactions fetched:', response.data.data.length);
+    console.log(' Transactions fetched:', response.data.data.length);
     return response.data.data;
   } catch (error: any) {
-    console.error('❌ Error fetching all transactions:', error);
+    console.error(' Error fetching all transactions:', error);
     return [];
   }
 }

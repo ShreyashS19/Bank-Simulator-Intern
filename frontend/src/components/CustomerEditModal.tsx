@@ -139,7 +139,7 @@ export const CustomerEditModal = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  {/* <SelectItem value="Inactive">Inactive</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>

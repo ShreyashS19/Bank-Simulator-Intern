@@ -10,7 +10,7 @@ public interface AccountService {
     Account getAccountByCustomerId(String customerId);
     Account getAccountByAccountNumber(String accountNumber);
     boolean updateAccount(String accountId, Account account);
-    boolean deleteAccount(String accountId);  // Soft delete
+    boolean deleteAccount(String accountId);  
     
     // Validation and utility methods
     boolean isAccountNumberExists(String accountNumber);
@@ -18,7 +18,6 @@ public interface AccountService {
     String getCustomerPhoneNumber(String customerId);
     //boolean isPhoneNumberLinkedToCustomer(String customerId, String phoneNumber);
     
-    // Debug and utility methods
  //   void debugPrintAccountDetails(String accountId);
     
     

@@ -224,10 +224,10 @@ public class AccountValidator {
             ResultSet rs = stmt.executeQuery();
             
             if (rs.next() && rs.getInt(1) > 0) {
-                System.out.println("✓ Aadhar number found in Customer Module: " + aadharNumber);
+                System.out.println(" Aadhar number found in Customer Module: " + aadharNumber);
                 return ValidationResult.success();
             } else {
-                System.out.println("✗ Aadhar number not found in Customer Module: " + aadharNumber);
+                System.out.println(" Aadhar number not found in Customer Module: " + aadharNumber);
                 return ValidationResult.failure("Aadhar number is not linked with any customer");
             }
             

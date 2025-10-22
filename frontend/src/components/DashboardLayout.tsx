@@ -68,7 +68,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 transition={{ duration: 0.2 }}
                 className="text-2xl font-bold text-sidebar-foreground"
               >
-                BankSim
+                Bank Simulation
               </motion.h1>
             )}
           </AnimatePresence>

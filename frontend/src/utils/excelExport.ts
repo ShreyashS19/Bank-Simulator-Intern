@@ -8,7 +8,7 @@ export const exportTransactionsToExcel = (transactions: Transaction[], accountNu
     'Amount': `₹${Number(transaction.amount).toLocaleString()}`,
     'Transaction Type': transaction.transactionType,
     'Description': transaction.description || '-',
-    'Status': transaction.status,
+    // 'Status': transaction.status,
     'Date/Time': new Date(transaction.timestamp).toLocaleString()
   }));
 
@@ -16,7 +16,6 @@ export const exportTransactionsToExcel = (transactions: Transaction[], accountNu
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
 
-  // Set column widths
   const maxWidth = 20;
   worksheet['!cols'] = [
     { wch: maxWidth },

@@ -30,7 +30,7 @@ const Customers = () => {
     customerPin: "",
     aadharNumber: "",
     dob: "",
-    status: "Inactive"
+    status: "Active"
   });
 
   const handleSearch = async () => {
@@ -127,7 +127,7 @@ const Customers = () => {
       const customerId = await customerService.createCustomer(customerData);
       
       console.log('✅ Customer created successfully! ID:', customerId);
-      toast.success(`Customer created successfully! ID: ${customerId}`);
+      toast.success(`Customer created successfully!`);
       
       handleReset();
       setSearchedCustomer(null);
@@ -282,7 +282,7 @@ const handleEdit = async (customer: Customer) => {
       customerPin: "",
       aadharNumber: "",
       dob: "",
-      status: "Inactive"
+      status: "Active"
     });
   };
 
@@ -410,7 +410,7 @@ const handleEdit = async (customer: Customer) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      {/* <SelectItem value="Inactive">Inactive</SelectItem> */}
                       <SelectItem value="Active">Active</SelectItem>
                     </SelectContent>
                   </Select>

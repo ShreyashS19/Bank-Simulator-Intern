@@ -8,6 +8,16 @@ export interface SignupRequest {
   password: string;
   confirmPassword: string;
 }
+export interface CustomerCheckResponse {
+  success: boolean;
+  message: string;
+  data: {
+    hasCustomerRecord: boolean;
+    userId: string;
+    email: string;
+  };
+  timestamp: string;
+}
 
 export interface LoginRequest {
   email: string;
@@ -37,7 +47,15 @@ export const authService = {
   login: async (request: LoginRequest): Promise<AuthResponse> => {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, request);
     return response.data;
+  },
+
+   checkCustomerExists: async (email: string): Promise<CustomerCheckResponse> => {
+    const response = await axios.get<CustomerCheckResponse>(
+      `${API_BASE_URL}/auth/check-customer?email=${encodeURIComponent(email)}`
+    );
+    return response.data;
   }
 };
+
 
 

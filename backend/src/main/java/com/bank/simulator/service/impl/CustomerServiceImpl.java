@@ -384,4 +384,19 @@ public class CustomerServiceImpl implements CustomerService {
 
         return false;
     }
+
+    @Override
+public boolean customerExistsByEmail(String email) {
+    String query = "SELECT COUNT(*) FROM Customer WHERE email = ?";
+    try (Connection conn = DBConfig.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+        stmt.setString(1, email);
+        ResultSet rs = stmt.executeQuery();
+        return rs.next() && rs.getInt(1) > 0;
+    } catch (SQLException e) {
+        System.err.println("Error checking customer existence: " + e.getMessage());
+        return false;
+    }
+}
+
 }

@@ -24,5 +24,6 @@ public interface CustomerService {
     String generateCustomerId();
     Customer getCustomerByAadharNumber(String aadharNumber);
 Customer getCustomerByPhoneNumber(String phoneNumber);
+boolean customerExistsByEmail(String email);
 
 }

@@ -1,11 +1,16 @@
 package com.bank.simulator.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.bank.simulator.model.ApiResponse;
 import com.bank.simulator.model.LoginRequest;
 import com.bank.simulator.model.SignupRequest;
 import com.bank.simulator.model.User;
 import com.bank.simulator.service.UserService;
+import com.bank.simulator.service.CustomerService;
 import com.bank.simulator.service.impl.UserServiceImpl;
+import com.bank.simulator.service.impl.CustomerServiceImpl;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -17,6 +22,7 @@ import jakarta.ws.rs.core.Response;
 public class AuthController {
     
     private final UserService userService = new UserServiceImpl();
+    private final CustomerService customerService = new CustomerServiceImpl();
 
     @POST
     @Path("/signup")
@@ -117,8 +123,51 @@ public class AuthController {
         }
     }
 
+    @GET
+    @Path("/check-customer")
+    public Response checkCustomerExists(@QueryParam("email") String email) {
+        try {
+            System.out.println("\n=== CHECK CUSTOMER REQUEST ===");
+            System.out.println("Email: " + email);
+            
+            if (email == null || email.trim().isEmpty()) {
+                System.err.println(" Validation failed: Email is required");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(ApiResponse.error("Email is required"))
+                        .build();
+            }
+            
+            User user = userService.getUserByEmail(email);
+            if (user == null) {
+                System.err.println(" User not found: " + email);
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(ApiResponse.error("User not found"))
+                        .build();
+            }
+            
+            boolean hasCustomerRecord = customerService.customerExistsByEmail(email);
+            
+            System.out.println(" Customer record exists: " + hasCustomerRecord);
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("hasCustomerRecord", hasCustomerRecord);
+            data.put("userId", user.getId());
+            data.put("email", user.getEmail());
+            
+            return Response.ok()
+                    .entity(ApiResponse.success("Customer check completed", data))
+                    .build();
+        } catch (Exception e) {
+            System.err.println("=== EXCEPTION IN CHECK CUSTOMER ===");
+            System.err.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ApiResponse.error("Error checking customer status: " + e.getMessage()))
+                    .build();
+        }
+    }
 
-    
     @POST
     @Path("/login")
     public Response login(LoginRequest loginRequest) {

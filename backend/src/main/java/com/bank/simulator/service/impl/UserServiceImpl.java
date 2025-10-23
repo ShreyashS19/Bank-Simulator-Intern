@@ -12,16 +12,12 @@ public class UserServiceImpl implements UserService {
     
     private static final AtomicInteger userCounter;
     
-    // Static initialization block - runs once when class is loaded
     static {
         userCounter = new AtomicInteger(getMaxUserIdFromDB() + 1);
         System.out.println("=== USER SERVICE INITIALIZED ===");
         System.out.println("Starting user counter at: " + userCounter.get());
     }
     
-    /**
-     * Queries database to find the highest existing user ID number
-     */
     private static int getMaxUserIdFromDB() {
         String query = "SELECT MAX(CAST(SUBSTRING(id, 6) AS UNSIGNED)) as max_id FROM User";
         
@@ -32,7 +28,7 @@ public class UserServiceImpl implements UserService {
             
             if (rs.next()) {
                 int maxId = rs.getInt("max_id");
-                System.out.println("✓ Loaded max user ID from database: " + maxId);
+                System.out.println(" Loaded max user ID from database: " + maxId);
                 return maxId;
             }
         } catch (SQLException e) {
@@ -73,11 +69,11 @@ public class UserServiceImpl implements UserService {
             int result = stmt.executeUpdate();
             
             if (result > 0) {
-                System.out.println("✓ User created successfully");
+                System.out.println(" User created successfully");
                 System.out.println("User ID: " + userId);
                 return userId;
             } else {
-                System.err.println("✗ User creation failed - no rows affected");
+                System.err.println(" User creation failed - no rows affected");
                 return null;
             }
             
@@ -110,10 +106,10 @@ public class UserServiceImpl implements UserService {
                 user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                 user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
                 
-                System.out.println("✓ User found: " + user.getFullName());
+                System.out.println(" User found: " + user.getFullName());
                 return user;
             } else {
-                System.out.println("✗ User not found");
+                System.out.println(" User not found");
                 return null;
             }
             

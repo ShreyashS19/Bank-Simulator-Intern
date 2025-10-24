@@ -48,21 +48,47 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Accounts from "./pages/Accounts";
 import Transactions from "./pages/Transactions";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected Route Component for Customers page
-const ProtectedCustomerRoute = ({ children }: { children: React.ReactNode }) => {
+// ✅ Admin Route Protection - Only admins can access
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  const hasCustomerRecord = localStorage.getItem("hasCustomerRecord") === "true";
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
   
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
-  // If user already has a customer record, redirect to dashboard
+  // If authenticated but not admin, redirect to regular dashboard
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // User is authenticated and is admin - allow access
+  return <>{children}</>;
+};
+
+// Protected Route Component for Customers page
+const ProtectedCustomerRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const hasCustomerRecord = localStorage.getItem("hasCustomerRecord") === "true";
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // ✅ Allow admins to access customers page
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+  
+  // If regular user already has a customer record, redirect to dashboard
   if (hasCustomerRecord) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -74,9 +100,15 @@ const ProtectedCustomerRoute = ({ children }: { children: React.ReactNode }) => 
 // General Protected Route Component for authenticated pages
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // ✅ Redirect admin to admin dashboard instead of regular dashboard
+  if (isAdmin && window.location.pathname === "/dashboard") {
+    return <Navigate to="/admin" replace />;
   }
   
   return <>{children}</>;
@@ -89,9 +121,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          
+          {/* ✅ Admin Dashboard Route - Only accessible to admins */}
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } 
+          />
           
           {/* Protected Routes */}
           <Route 
@@ -103,7 +146,7 @@ const App = () => (
             } 
           />
           
-          {/* Protected Customers Route - Only accessible if user doesn't have customer record */}
+          {/* Protected Customers Route - Accessible to admins and users without customer record */}
           <Route 
             path="/customers" 
             element={

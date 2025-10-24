@@ -165,7 +165,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Users, CreditCard, ArrowLeftRight, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, ArrowLeftRight, LogOut, Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -179,6 +179,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
+  // ✅ Check if user is admin
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    const stored = localStorage.getItem("isAdmin");
+    return stored === "true";
+  });
+
   // Check if user has a customer record
   const [hasCustomerRecord, setHasCustomerRecord] = useState<boolean>(() => {
     const stored = localStorage.getItem("hasCustomerRecord");
@@ -191,24 +197,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       navigate("/login");
     }
 
-    // Update hasCustomerRecord state if localStorage changes
-    const checkCustomerRecord = () => {
-      const stored = localStorage.getItem("hasCustomerRecord");
-      setHasCustomerRecord(stored === "true");
+    // Update states if localStorage changes
+    const checkLocalStorage = () => {
+      const storedCustomerRecord = localStorage.getItem("hasCustomerRecord");
+      const storedIsAdmin = localStorage.getItem("isAdmin");
+      
+      setHasCustomerRecord(storedCustomerRecord === "true");
+      setIsAdmin(storedIsAdmin === "true");
     };
 
     // Listen for storage changes (useful if updated in another tab/window)
-    window.addEventListener("storage", checkCustomerRecord);
+    window.addEventListener("storage", checkLocalStorage);
     
     return () => {
-      window.removeEventListener("storage", checkCustomerRecord);
+      window.removeEventListener("storage", checkLocalStorage);
     };
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
-    localStorage.removeItem("hasCustomerRecord"); // Clear customer record status
+    localStorage.removeItem("hasCustomerRecord");
+    localStorage.removeItem("isAdmin"); // ✅ Clear admin flag
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -217,21 +227,66 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     setIsCollapsed(!isCollapsed);
   };
 
-  // Define all navigation items
+  // ✅ Define all navigation items with admin check
   const allNavItems = [
-    { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard", showAlways: true },
-    { path: "/customers", icon: Users, label: "Customers", showAlways: false }, // Only show if no customer record
-    { path: "/accounts", icon: CreditCard, label: "Accounts", showAlways: true },
-    { path: "/transactions", icon: ArrowLeftRight, label: "Transactions", showAlways: true },
+    { 
+      path: "/dashboard", 
+      icon: LayoutDashboard, 
+      label: "Dashboard", 
+      showAlways: true,
+      showForAdmin: false // Admins have their own dashboard
+    },
+    { 
+      path: "/admin", 
+      icon: Shield, 
+      label: "Admin Panel", 
+      showAlways: false,
+      showForAdmin: true, // Only show for admins
+      adminOnly: true
+    },
+    { 
+      path: "/customers", 
+      icon: Users, 
+      label: "Customers", 
+      showAlways: false,
+      showForAdmin: true // Admins can access
+    },
+    { 
+      path: "/accounts", 
+      icon: CreditCard, 
+      label: "Accounts", 
+      showAlways: true,
+      showForAdmin: true
+    },
+    { 
+      path: "/transactions", 
+      icon: ArrowLeftRight, 
+      label: "Transactions", 
+      showAlways: true,
+      showForAdmin: true
+    },
   ];
 
-  // Filter navigation items based on customer record status
+  // ✅ Filter navigation items based on admin and customer record status
   const navItems = allNavItems.filter(item => {
+    // If item is admin only, show only to admins
+    if (item.adminOnly) {
+      return isAdmin;
+    }
+
+    // Hide dashboard link for admins (they have Admin Panel instead)
+    if (item.path === "/dashboard" && isAdmin) {
+      return false;
+    }
+
     // Show items that should always be visible
     if (item.showAlways) return true;
     
-    // Show Customers tab only if user does NOT have a customer record
-    if (item.path === "/customers") {
+    // Show items that are for admins
+    if (item.showForAdmin && isAdmin) return true;
+    
+    // Show Customers tab only if user does NOT have a customer record (and not admin)
+    if (item.path === "/customers" && !isAdmin) {
       return !hasCustomerRecord;
     }
     
@@ -273,6 +328,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </Button>
         </div>
 
+        {/* ✅ Admin Badge (Optional) */}
+        {isAdmin && !isCollapsed && (
+          <div className="px-6 py-3 bg-primary/10 border-b border-sidebar-border">
+            <div className="flex items-center gap-2 text-primary text-sm font-medium">
+              <Shield className="h-4 w-4" />
+              <span>Administrator</span>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Items */}
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
@@ -285,7 +350,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   className={cn(
                     "w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-                    isCollapsed ? "justify-center px-2" : "justify-start"
+                    isCollapsed ? "justify-center px-2" : "justify-start",
+                    // ✅ Highlight admin panel link
+                    item.adminOnly && "border-l-2 border-primary"
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >

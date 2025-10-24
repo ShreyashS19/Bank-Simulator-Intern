@@ -17,7 +17,6 @@ const Login = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Admin credentials
   const ADMIN_EMAIL = 'admin@bank.com';
   const ADMIN_PASSWORD = 'Admin@123';
 
@@ -32,9 +31,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // ✅ STEP 1: Check if credentials match admin
       if (formData.email === ADMIN_EMAIL && formData.password === ADMIN_PASSWORD) {
-        // Admin login
         localStorage.setItem('user', JSON.stringify({ 
           email: ADMIN_EMAIL, 
           role: 'admin',
@@ -49,7 +46,6 @@ const Login = () => {
           icon: <Shield className="h-4 w-4" />
         });
         
-        // Small delay for better UX
         setTimeout(() => {
           navigate('/admin');
         }, 500);
@@ -58,23 +54,19 @@ const Login = () => {
         return;
       }
 
-      // ✅ STEP 2: Regular user login authentication
       const response = await authService.login({
         email: formData.email,
         password: formData.password
       });
 
       if (response.success) {
-        // Store user data and authentication status
         localStorage.setItem('user', JSON.stringify(response.data));
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('isAdmin', 'false'); // Regular user
+        localStorage.setItem('isAdmin', 'false'); 
         
-        // ✅ STEP 3: Check if user has a customer record
         try {
           const customerCheck = await authService.checkCustomerExists(formData.email);
           
-          // Store customer record status
           const hasCustomerRecord = customerCheck.success && customerCheck.data.hasCustomerRecord;
           localStorage.setItem('hasCustomerRecord', String(hasCustomerRecord));
           
@@ -82,13 +74,10 @@ const Login = () => {
           
           toast.success("Login successful!");
           
-          // Redirect based on customer record status
           if (hasCustomerRecord) {
-            // User has customer record - redirect to main dashboard
             console.log('User has customer record, redirecting to dashboard');
             navigate("/dashboard");
           } else {
-            // User doesn't have customer record - can access customers page
             console.log('User does not have customer record, redirecting to dashboard');
             navigate("/dashboard");
           }
@@ -178,12 +167,12 @@ const Login = () => {
             </form>
             
             {/* Admin hint - Optional */}
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
+            {/* <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
               <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
                 <Shield className="h-3 w-3" />
                 Admin Access: admin@bank.com
               </p>
-            </div>
+            </div> */}
 
             <div className="mt-4 text-center text-sm">
               <span className="text-muted-foreground">New user? </span>

@@ -126,7 +126,7 @@ public class Transaction {
                 ", amount=" + amount +
                 ", transactionType='" + transactionType + '\'' +
                 ", description='" + description + '\'' +
-                ", pin='***'" +  // Don't log actual PIN
+                ", pin='***'" +  
                 ", createdDate=" + createdDate +
                 '}';
     }

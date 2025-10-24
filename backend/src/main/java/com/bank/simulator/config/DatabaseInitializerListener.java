@@ -115,16 +115,18 @@ public class DatabaseInitializerListener implements ServletContextListener {
                     FOREIGN KEY (account_id) REFERENCES Account(account_id) ON DELETE CASCADE
                 )
             """;
-            String userTable = """
+                    String userTable = """
                 CREATE TABLE IF NOT EXISTS User (
                     id VARCHAR(50) PRIMARY KEY,
                     full_name VARCHAR(100) NOT NULL,
                     email VARCHAR(100) NOT NULL UNIQUE,
                     password VARCHAR(255) NOT NULL,
+                    active BOOLEAN DEFAULT TRUE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
             """;
+
 
             stmt.executeUpdate(userTable);
             System.out.println("Table 'User' is ready.");

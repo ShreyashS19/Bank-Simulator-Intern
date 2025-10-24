@@ -56,10 +56,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
     }
 
-    /**
-     * ⭐ NEW: Generate customer ID by querying database for the latest ID
-     * This ensures IDs are unique even after app restarts
-     */
     @Override
     public String generateCustomerId() {
         String query = "SELECT customer_id FROM Customer " +
@@ -317,8 +313,6 @@ public class CustomerServiceImpl implements CustomerService {
         return customers;
     }
 
-    // ⭐ REQUIRED: Methods from CustomerService interface (used by validation layer)
-    
     @Override
     public boolean isPhoneNumberExists(String phoneNumber) {
         String query = "SELECT COUNT(*) FROM Customer WHERE phone_number = ?";
@@ -386,17 +380,40 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-public boolean customerExistsByEmail(String email) {
-    String query = "SELECT COUNT(*) FROM Customer WHERE email = ?";
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
-        stmt.setString(1, email);
-        ResultSet rs = stmt.executeQuery();
-        return rs.next() && rs.getInt(1) > 0;
-    } catch (SQLException e) {
-        System.err.println("Error checking customer existence: " + e.getMessage());
-        return false;
+    public boolean isAadharExists(String aadharNumber) {
+        return isAadharNumberExists(aadharNumber);
     }
-}
 
+    @Override
+    public boolean isCustomerExistsByEmail(String email) {
+        System.out.println("\n=== CHECKING CUSTOMER EXISTS BY EMAIL ===");
+        System.out.println("Email: " + email);
+        
+        String query = "SELECT COUNT(*) FROM Customer WHERE email = ?";
+        
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                boolean exists = rs.getInt(1) > 0;
+                System.out.println("Customer exists: " + exists);
+                return exists;
+            }
+            
+            return false;
+            
+        } catch (SQLException e) {
+            System.err.println("Error checking customer by email: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean customerExistsByEmail(String email) {
+        return isCustomerExistsByEmail(email);
+    }
 }

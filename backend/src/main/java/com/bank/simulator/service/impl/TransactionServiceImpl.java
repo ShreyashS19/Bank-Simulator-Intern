@@ -17,17 +17,12 @@ public class TransactionServiceImpl implements TransactionService {
     
     private static final AtomicInteger transactionCounter;
     
-    // Static initialization block - runs once when class is loaded
     static {
         transactionCounter = new AtomicInteger(getMaxTransactionIdFromDB() + 1);
         System.out.println("=== TRANSACTION SERVICE INITIALIZED ===");
         System.out.println("Starting transaction counter at: " + transactionCounter.get());
     }
-    
-    /**
-     * Queries database to find the highest existing transaction ID number
-     * and returns it so the counter can start from the next available ID
-     */
+   
     private static int getMaxTransactionIdFromDB() {
         String query = "SELECT MAX(CAST(SUBSTRING(transaction_id, 5) AS UNSIGNED)) as max_id FROM Transaction";
         
@@ -38,7 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
             
             if (rs.next()) {
                 int maxId = rs.getInt("max_id");
-                System.out.println("✓ Loaded max transaction ID from database: " + maxId);
+                System.out.println(" Loaded max transaction ID from database: " + maxId);
                 return maxId;
             }
         } catch (SQLException e) {
@@ -47,7 +42,7 @@ public class TransactionServiceImpl implements TransactionService {
             System.err.println("Starting counter from 0 (first ID will be TXN_1)");
         }
         
-        return 0; // Start from 1 if no transactions exist or on error
+        return 0; 
     }
 
     @Override
@@ -142,7 +137,6 @@ public class TransactionServiceImpl implements TransactionService {
             System.out.println("=== TRANSACTION COMPLETED SUCCESSFULLY ===");
             System.out.println("Transaction ID: " + transactionId);
 
-            // ⭐ NEW: Send email notifications after successful transaction
             try {
                 System.out.println("\n=== INITIATING EMAIL NOTIFICATIONS ===");
                 sendTransactionEmails(
@@ -155,10 +149,9 @@ public class TransactionServiceImpl implements TransactionService {
                     transactionId
                 );
             } catch (Exception emailEx) {
-                System.err.println("\n⚠️ EMAIL NOTIFICATION FAILED (Transaction was successful)");
+                System.err.println("\n EMAIL NOTIFICATION FAILED (Transaction was successful)");
                 System.err.println("Error: " + emailEx.getMessage());
                 emailEx.printStackTrace();
-                // Don't fail the transaction if email fails
             }
 
             return transactionId;
@@ -191,7 +184,6 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    // ⭐ NEW: Helper method to send transaction emails with dynamic bank names
     private void sendTransactionEmails(
             Connection conn,
             String senderAccountId,
@@ -201,11 +193,9 @@ public class TransactionServiceImpl implements TransactionService {
             BigDecimal amount,
             String transactionId
     ) throws SQLException {
-        
-        // Initialize notification service
+       
         NotificationService notificationService = new NotificationServiceImpl();
 
-        // ⭐ UPDATED: Get sender customer details + bank name + account number
         String senderQuery = "SELECT c.name, c.email, a.bank_name, a.account_number FROM Customer c " +
                             "JOIN Account a ON c.customer_id = a.customer_id " +
                             "WHERE a.account_id = ?";
@@ -226,7 +216,6 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
 
-        // ⭐ UPDATED: Get receiver customer details + bank name + account number
         String receiverQuery = "SELECT c.name, c.email, a.bank_name, a.account_number FROM Customer c " +
                               "JOIN Account a ON c.customer_id = a.customer_id " +
                               "WHERE a.account_id = ?";
@@ -253,48 +242,46 @@ public class TransactionServiceImpl implements TransactionService {
         System.out.println("Receiver: " + receiverName + " <" + receiverEmail + ">");
         System.out.println("Receiver Bank: " + receiverBankName);
 
-        // ⭐ UPDATED: Send email to sender (debit notification) with bank name
         if (senderEmail != null && senderName != null && !senderEmail.trim().isEmpty()) {
-            System.out.println("\n📧 Sending DEBIT notification to sender: " + senderEmail);
+            System.out.println("\n Sending DEBIT notification to sender: " + senderEmail);
             try {
                 notificationService.sendTransactionNotificationToSender(
                     senderEmail,
                     senderName,
-                    senderBankName != null ? senderBankName : "Bank",  // Fallback to "Bank" if null
+                    senderBankName != null ? senderBankName : "Bank",  
                     senderAccNum != null ? senderAccNum : senderAccountNumber,
                     receiverAccountNumber,
                     amount,
                     transactionId
                 );
-                System.out.println("✓ Sender email sent successfully");
+                System.out.println(" Sender email sent successfully");
             } catch (Exception e) {
-                System.err.println("✗ Failed to send email to sender: " + e.getMessage());
+                System.err.println(" Failed to send email to sender: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            System.err.println("⚠️ Sender email not found or invalid. Skipping sender notification.");
+            System.err.println(" Sender email not found or invalid. Skipping sender notification.");
         }
 
-        // ⭐ UPDATED: Send email to receiver (credit notification) with bank name
         if (receiverEmail != null && receiverName != null && !receiverEmail.trim().isEmpty()) {
-            System.out.println("\n📧 Sending CREDIT notification to receiver: " + receiverEmail);
+            System.out.println("\n Sending CREDIT notification to receiver: " + receiverEmail);
             try {
                 notificationService.sendTransactionNotificationToReceiver(
                     receiverEmail,
                     receiverName,
-                    receiverBankName != null ? receiverBankName : "Bank",  // Fallback to "Bank" if null
+                    receiverBankName != null ? receiverBankName : "Bank",  
                     receiverAccNum != null ? receiverAccNum : receiverAccountNumber,
                     senderAccountNumber,
                     amount,
                     transactionId
                 );
-                System.out.println("✓ Receiver email sent successfully");
+                System.out.println(" Receiver email sent successfully");
             } catch (Exception e) {
-                System.err.println("✗ Failed to send email to receiver: " + e.getMessage());
+                System.err.println(" Failed to send email to receiver: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            System.err.println("⚠️ Receiver email not found or invalid. Skipping receiver notification.");
+            System.err.println(" Receiver email not found or invalid. Skipping receiver notification.");
         }
 
         System.out.println("=== EMAIL NOTIFICATIONS COMPLETED ===\n");

@@ -389,10 +389,10 @@ public class AccountServiceImpl implements AccountService {
             
             if (rs.next()) {
                 String customerId = rs.getString("customer_id");
-                System.out.println("✓ Found customer for Aadhar " + aadharNumber + ": " + customerId);
+                System.out.println(" Found customer for Aadhar " + aadharNumber + ": " + customerId);
                 return customerId;
             } else {
-                System.out.println("✗ No customer found for Aadhar: " + aadharNumber);
+                System.out.println(" No customer found for Aadhar: " + aadharNumber);
                 return null;
             }
             
@@ -491,9 +491,9 @@ public class AccountServiceImpl implements AccountService {
             if (rs.next()) {
                 boolean exists = rs.getInt(1) > 0;
                 if (exists) {
-                    System.out.println("✗ Account number already exists: " + accountNumber);
+                    System.out.println(" Account number already exists: " + accountNumber);
                 } else {
-                    System.out.println("✓ Account number is unique: " + accountNumber);
+                    System.out.println(" Account number is unique: " + accountNumber);
                 }
                 return exists;
             }

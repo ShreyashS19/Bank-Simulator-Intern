@@ -181,7 +181,7 @@ public class CustomerValidator {
                 return ValidationResult.failure("Phone number already exists");
             }
             
-            System.out.println("✓ Phone number is unique for update: " + phoneNumber);
+            System.out.println(" Phone number is unique for update: " + phoneNumber);
             return ValidationResult.success();
         } catch (SQLException e) {
             System.err.println("Error checking phone uniqueness for update: " + e.getMessage());
@@ -229,7 +229,7 @@ public class CustomerValidator {
                 return ValidationResult.failure("Aadhar number already exists");
             }
             
-            System.out.println("✓ Aadhar number is unique for update: " + aadharNumber);
+            System.out.println(" Aadhar number is unique for update: " + aadharNumber);
             return ValidationResult.success();
         } catch (SQLException e) {
             System.err.println("Error checking aadhar uniqueness for update: " + e.getMessage());

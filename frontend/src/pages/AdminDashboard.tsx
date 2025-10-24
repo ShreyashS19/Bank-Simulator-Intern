@@ -5,7 +5,6 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -46,31 +45,31 @@ import {
 import { customerService, Customer } from '../services/customerService';
 import { accountService, Account } from '../services/accountService';
 import { transactionService, Transaction } from '../services/transactionService';
+import { authService, User } from '../services/authService';
 
-type TabType = 'customers' | 'accounts' | 'transactions';
+type TabType = 'users' | 'customers' | 'accounts' | 'transactions';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>('customers');
+  const [activeTab, setActiveTab] = useState<TabType>('users');
   const [loading, setLoading] = useState(false);
 
-  // Customer state
+  const [users, setUsers] = useState<User[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
 
-  // Account state
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountSearch, setAccountSearch] = useState('');
 
-  // Transaction state
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionSearch, setTransactionSearch] = useState('');
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('all');
 
-  // Delete dialog state
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    type: 'customer' | 'account' | null;
+    type: 'user' | 'customer' | 'account' | 'transaction' | null;
     id: string;
     name: string;
   }>({
@@ -80,8 +79,9 @@ const AdminDashboard = () => {
     name: '',
   });
 
-  // Stats
   const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
     totalCustomers: 0,
     activeCustomers: 0,
     totalAccounts: 0,
@@ -91,7 +91,6 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    // Check if user is admin
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     if (!isAdmin) {
       toast.error('Unauthorized access');
@@ -105,17 +104,19 @@ const AdminDashboard = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [customersData, accountsData, transactionsData] = await Promise.all([
+      const [usersData, customersData, accountsData, transactionsData] = await Promise.all([
+        authService.getAllUsers(),
         customerService.getAllCustomers(),
         accountService.getAllAccounts(),
         transactionService.getAllTransactions(),
       ]);
 
+      setUsers(usersData.data || []);
       setCustomers(customersData);
       setAccounts(accountsData);
       setTransactions(transactionsData);
 
-      // Calculate stats
+      const activeUsers = (usersData.data || []).filter((u: User) => u.active).length;
       const activeCustomers = customersData.filter(
         (c) => c.status.toLowerCase() === 'active'
       ).length;
@@ -128,6 +129,8 @@ const AdminDashboard = () => {
       );
 
       setStats({
+        totalUsers: (usersData.data || []).length,
+        activeUsers,
         totalCustomers: customersData.length,
         activeCustomers,
         totalAccounts: accountsData.length,
@@ -145,7 +148,17 @@ const AdminDashboard = () => {
     }
   };
 
-  // Customer actions
+  const toggleUserStatus = async (user: User) => {
+    try {
+      const newStatus = !user.active;
+      await authService.updateUserStatus(user.email, newStatus);
+      toast.success(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      loadAllData();
+    } catch (error: any) {
+      toast.error('Failed to update user status');
+    }
+  };
+
   const toggleCustomerStatus = async (customer: Customer) => {
     try {
       const newStatus = customer.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
@@ -171,7 +184,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Account actions
   const toggleAccountStatus = async (account: Account) => {
     try {
       const newStatus = account.status.toUpperCase() === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -197,7 +209,23 @@ const AdminDashboard = () => {
     }
   };
 
-  // Filtered data
+  const deleteTransaction = async () => {
+    try {
+      await transactionService.deleteTransaction(deleteDialog.id);
+      toast.success('Transaction deleted successfully');
+      setDeleteDialog({ open: false, type: null, id: '', name: '' });
+      loadAllData();
+    } catch (error: any) {
+      toast.error('Failed to delete transaction. Please try again.');
+    }
+  };
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.fullName.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   const filteredCustomers = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
@@ -214,7 +242,8 @@ const AdminDashboard = () => {
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch =
       t.senderAccountNumber.includes(transactionSearch) ||
-      t.receiverAccountNumber.includes(transactionSearch);
+      t.receiverAccountNumber.includes(transactionSearch) ||
+      (t.transactionId && t.transactionId.includes(transactionSearch));
     const matchesType =
       transactionTypeFilter === 'all' || t.transactionType === transactionTypeFilter;
     return matchesSearch && matchesType;
@@ -230,7 +259,6 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -241,9 +269,27 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.activeUsers} active
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
@@ -261,7 +307,7 @@ const AdminDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
           >
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -280,23 +326,6 @@ const AdminDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalTransactions}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
             <Card>
@@ -306,16 +335,26 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(stats.totalVolume)}</div>
-                <p className="text-xs text-muted-foreground">Total processed</p>
+                <p className="text-xs text-muted-foreground">{stats.totalTransactions} total</p>
               </CardContent>
             </Card>
           </motion.div>
         </div>
 
-        {/* Tabs */}
         <Card>
           <CardHeader>
             <div className="flex gap-4 border-b">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`pb-2 px-4 font-medium transition-colors ${
+                  activeTab === 'users'
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Shield className="h-4 w-4 inline mr-2" />
+                Users
+              </button>
               <button
                 onClick={() => setActiveTab('customers')}
                 className={`pb-2 px-4 font-medium transition-colors ${
@@ -353,7 +392,74 @@ const AdminDashboard = () => {
           </CardHeader>
 
           <CardContent>
-            {/* Customers Tab */}
+            {activeTab === 'users' && (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or email..."
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-mono text-sm">{user.id}</TableCell>
+                          <TableCell className="font-medium">{user.fullName}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs ${
+                                user.active
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                            >
+                              {user.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(user.createdAt || '').toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toggleUserStatus(user)}
+                              title={user.active ? 'Deactivate' : 'Activate'}
+                            >
+                              {user.active ? (
+                                <UserX className="h-4 w-4 text-orange-600" />
+                              ) : (
+                                <UserCheck className="h-4 w-4 text-green-600" />
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'customers' && (
               <div className="space-y-4">
                 <div className="flex gap-4">
@@ -445,7 +551,6 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Accounts Tab */}
             {activeTab === 'accounts' && (
               <div className="space-y-4">
                 <div className="flex gap-4">
@@ -539,14 +644,13 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Transactions Tab */}
             {activeTab === 'transactions' && (
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search by account number..."
+                      placeholder="Search by transaction ID or account number..."
                       value={transactionSearch}
                       onChange={(e) => setTransactionSearch(e.target.value)}
                       className="pl-10"
@@ -580,6 +684,7 @@ const AdminDashboard = () => {
                         <TableHead>Amount</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -603,7 +708,24 @@ const AdminDashboard = () => {
                             </span>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {new Date(txn.createdDate).toLocaleString()}
+                            {new Date(txn.createdDate || txn.timestamp).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setDeleteDialog({
+                                  open: true,
+                                  type: 'transaction',
+                                  id: txn.transactionId || '',
+                                  name: `Transaction ${txn.transactionId}`,
+                                })
+                              }
+                              title="Delete transaction"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -616,8 +738,12 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, type: null, id: '', name: '' })}>
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) =>
+          !open && setDeleteDialog({ open: false, type: null, id: '', name: '' })
+        }
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -635,6 +761,8 @@ const AdminDashboard = () => {
                   deleteCustomer();
                 } else if (deleteDialog.type === 'account') {
                   deleteAccount();
+                } else if (deleteDialog.type === 'transaction') {
+                  deleteTransaction();
                 }
               }}
               className="bg-destructive hover:bg-destructive/90"

@@ -8,6 +8,28 @@ export interface SignupRequest {
   password: string;
   confirmPassword: string;
 }
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data: User;
+  timestamp: string;
+}
+
 export interface CustomerCheckResponse {
   success: boolean;
   message: string;
@@ -19,22 +41,15 @@ export interface CustomerCheckResponse {
   timestamp: string;
 }
 
-export interface LoginRequest {
+export interface UserStatus {
   email: string;
-  password: string;
+  active: boolean;
 }
 
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  createdAt?: string;
-}
-
-export interface AuthResponse {
+export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
-  data: User;
+  data: T;
   timestamp: string;
 }
 
@@ -49,13 +64,31 @@ export const authService = {
     return response.data;
   },
 
-   checkCustomerExists: async (email: string): Promise<CustomerCheckResponse> => {
+  checkCustomerExists: async (email: string): Promise<CustomerCheckResponse> => {
     const response = await axios.get<CustomerCheckResponse>(
       `${API_BASE_URL}/auth/check-customer?email=${encodeURIComponent(email)}`
     );
     return response.data;
-  }
+  },
+
+  getAllUsers: async (): Promise<ApiResponse<User[]>> => {
+    const response = await axios.get(`${API_BASE_URL}/auth/users/all`);
+    return response.data;
+  },
+
+  updateUserStatus: async (email: string, active: boolean): Promise<ApiResponse> => {
+    const response = await axios.put(
+      `${API_BASE_URL}/auth/user/status?email=${encodeURIComponent(email)}&active=${active}`
+    );
+    return response.data;
+  },
+
+  getUserByEmail: async (email: string): Promise<ApiResponse<User>> => {
+    const response = await axios.get(
+      `${API_BASE_URL}/auth/user?email=${encodeURIComponent(email)}`
+    );
+    return response.data;
+  },
 };
 
-
-
+export default authService;

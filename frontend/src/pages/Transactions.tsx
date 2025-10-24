@@ -19,7 +19,7 @@ const Transactions = () => {
     senderAccountNumber: "",
     receiverAccountNumber: "",
     amount: "",
-    transactionType: "ONLINE", // Fixed to ONLINE only
+    transactionType: "ONLINE",
     description: "",
     pin: ""
   });
@@ -123,7 +123,6 @@ const Transactions = () => {
     });
   };
 
-  // Calculate summary stats
   const totalTransactions = searchedTransactions.length;
   const totalVolume = searchedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -135,7 +134,6 @@ const Transactions = () => {
           <p className="text-muted-foreground mt-1">Create and track online transactions</p>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -168,7 +166,6 @@ const Transactions = () => {
           </Card>
         </div>
 
-        {/* Create Transaction Form */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -180,7 +177,9 @@ const Transactions = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="senderAccountNumber">Sender Account Number</Label>
+                  <Label htmlFor="senderAccountNumber">
+                    Sender Account Number <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="senderAccountNumber"
                     value={formData.senderAccountNumber}
@@ -190,7 +189,9 @@ const Transactions = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="receiverAccountNumber">Receiver Account Number</Label>
+                  <Label htmlFor="receiverAccountNumber">
+                    Receiver Account Number <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="receiverAccountNumber"
                     value={formData.receiverAccountNumber}
@@ -200,12 +201,14 @@ const Transactions = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="amount">
+                    Amount <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="amount"
                     type="number"
-                    step="0.01"
-                    min="0.01"
+                    step="1.00"
+                    min="1.00"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="Enter amount"
@@ -213,7 +216,6 @@ const Transactions = () => {
                   />
                 </div>
                 
-                {/* Transaction Type - Hidden/Read-only since it's always ONLINE */}
                 <div className="space-y-2">
                   <Label htmlFor="transactionType">Transaction Type</Label>
                   <Input
@@ -235,7 +237,9 @@ const Transactions = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pin">Sender PIN</Label>
+                  <Label htmlFor="pin">
+                    Sender PIN <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="pin"
                     type="password"
@@ -266,44 +270,26 @@ const Transactions = () => {
                 <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
               </div>
             </form>
-                      {/* Report Issue Button */}
-          {/* <div className="mt-6 flex justify-center">
-            <Button
-              type="button"
-              onClick={() => {
-                const email = 'bank.simulator.issue@gmail.com';
-                const subject = 'Issue Report - Bank Simulator - Transaction Dashboard';
-                const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Transaction Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
-                
-                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
-                window.open(gmailUrl, '_blank');
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              Report Issue
-            </Button>
-          </div> */}
-         <div className="mt-4">
-         <Button
-    type="button"
-    onClick={() => {
-      const email = 'bank.simulator.issue@gmail.com';
-      const subject = 'Issue Report - Bank Simulator - Transaction Dashboard';
-      const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Transaction Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
-      
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
-      window.open(gmailUrl, '_blank');
-    }}
-    className="bg-red-600 hover:bg-red-700 text-white font-medium"
-  >
-    Report Issue
-  </Button>
-  </div>
+            
+            <div className="mt-4">
+              <Button
+                type="button"
+                onClick={() => {
+                  const email = 'bank.simulator.issue@gmail.com';
+                  const subject = 'Issue Report - Bank Simulator - Transaction Dashboard';
+                  const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Transaction Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
+                  
+                  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
+                  window.open(gmailUrl, '_blank');
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium"
+              >
+                Report Issue
+              </Button>
+            </div>
           </CardContent>
         </Card>
      
-     
-        {/* Search Transactions by Account */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -349,9 +335,7 @@ const Transactions = () => {
                 Download Excel
               </Button>
             </div>
-             
-                
-            {/* Search Results Table */}
+            
             {hasSearched && (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}

@@ -410,7 +410,7 @@ public ValidationResult validateAccountNumberFormat(String accountNumber) {
                 return ValidationResult.failure("Account number already exists. Please use a unique account number.");
             }
             
-            System.out.println("✓ Account number is unique: " + accountNumber);
+            System.out.println(" Account number is unique: " + accountNumber);
             return ValidationResult.success();
             
         } catch (SQLException e) {

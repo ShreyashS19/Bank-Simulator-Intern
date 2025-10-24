@@ -266,9 +266,43 @@ const Transactions = () => {
                 <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
               </div>
             </form>
+                      {/* Report Issue Button */}
+          {/* <div className="mt-6 flex justify-center">
+            <Button
+              type="button"
+              onClick={() => {
+                const email = 'bank.simulator.issue@gmail.com';
+                const subject = 'Issue Report - Bank Simulator - Transaction Dashboard';
+                const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Transaction Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
+                
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
+                window.open(gmailUrl, '_blank');
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              Report Issue
+            </Button>
+          </div> */}
+         <div className="mt-4">
+         <Button
+    type="button"
+    onClick={() => {
+      const email = 'bank.simulator.issue@gmail.com';
+      const subject = 'Issue Report - Bank Simulator - Transaction Dashboard';
+      const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Transaction Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
+      
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
+      window.open(gmailUrl, '_blank');
+    }}
+    className="bg-red-600 hover:bg-red-700 text-white font-medium"
+  >
+    Report Issue
+  </Button>
+  </div>
           </CardContent>
         </Card>
-
+     
+     
         {/* Search Transactions by Account */}
         <Card>
           <CardHeader>
@@ -315,7 +349,8 @@ const Transactions = () => {
                 Download Excel
               </Button>
             </div>
-
+             
+                
             {/* Search Results Table */}
             {hasSearched && (
               <motion.div 

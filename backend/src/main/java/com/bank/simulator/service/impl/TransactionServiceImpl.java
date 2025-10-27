@@ -5,44 +5,73 @@ import com.bank.simulator.model.Transaction;
 import com.bank.simulator.service.TransactionService;
 import com.bank.simulator.service.NotificationService;
 import java.sql.Statement;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TransactionServiceImpl implements TransactionService {
     
-    private static final AtomicInteger transactionCounter;
-    
-    static {
-        transactionCounter = new AtomicInteger(getMaxTransactionIdFromDB() + 1);
-        System.out.println("=== TRANSACTION SERVICE INITIALIZED ===");
-        System.out.println("Starting transaction counter at: " + transactionCounter.get());
+    private final NotificationService notificationService = new NotificationServiceImpl();
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final AtomicInteger dailyCounter = new AtomicInteger(1);
+    private static volatile String lastDate = "";
+
+    @Override
+    public String generateTransactionId() {
+        String currentDate = LocalDateTime.now().format(DATE_FORMATTER);
+        
+        synchronized (TransactionServiceImpl.class) {
+            if (!currentDate.equals(lastDate)) {
+                lastDate = currentDate;
+                int maxCounter = getMaxDailyCounterFromDB(currentDate);
+                dailyCounter.set(maxCounter + 1);
+                System.out.println("=== NEW DAY DETECTED OR SERVER RESTART ===");
+                System.out.println("Date: " + currentDate);
+                System.out.println("Starting counter at: " + dailyCounter.get());
+            }
+            
+            int counter = dailyCounter.getAndIncrement();
+            String transactionId = String.format("TXN_%s%03d", currentDate, counter);
+            
+            System.out.println("Generated Transaction ID: " + transactionId);
+            return transactionId;
+        }
     }
-   
-    private static int getMaxTransactionIdFromDB() {
-        String query = "SELECT MAX(CAST(SUBSTRING(transaction_id, 5) AS UNSIGNED)) as max_id FROM Transaction";
+
+    private int getMaxDailyCounterFromDB(String dateStr) {
+        String query = "SELECT transaction_id FROM Transaction WHERE transaction_id LIKE ? ORDER BY transaction_id DESC LIMIT 1";
         
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             
+            stmt.setString(1, "TXN_" + dateStr + "%");
             ResultSet rs = stmt.executeQuery();
             
             if (rs.next()) {
-                int maxId = rs.getInt("max_id");
-                System.out.println(" Loaded max transaction ID from database: " + maxId);
-                return maxId;
+                String lastTxnId = rs.getString("transaction_id");
+                String counterPart = lastTxnId.substring(13);
+                int maxCounter = Integer.parseInt(counterPart);
+                
+                System.out.println("Loaded max transaction counter from database:");
+                System.out.println("  Last Transaction ID: " + lastTxnId);
+                System.out.println("  Max Counter: " + maxCounter);
+                
+                return maxCounter;
+            } else {
+                System.out.println("No transactions found for date: " + dateStr);
+                return 0;
             }
+            
         } catch (SQLException e) {
-            System.err.println("Warning: Could not load max transaction ID from database");
+            System.err.println("Warning: Could not load max transaction counter from database");
             System.err.println("Error: " + e.getMessage());
-            System.err.println("Starting counter from 0 (first ID will be TXN_1)");
+            System.err.println("Starting counter from 0 for date: " + dateStr);
+            return 0;
         }
-        
-        return 0; 
     }
 
     @Override
@@ -149,7 +178,7 @@ public class TransactionServiceImpl implements TransactionService {
                     transactionId
                 );
             } catch (Exception emailEx) {
-                System.err.println("\n EMAIL NOTIFICATION FAILED (Transaction was successful)");
+                System.err.println("\nEMAIL NOTIFICATION FAILED (Transaction was successful)");
                 System.err.println("Error: " + emailEx.getMessage());
                 emailEx.printStackTrace();
             }
@@ -193,8 +222,6 @@ public class TransactionServiceImpl implements TransactionService {
             BigDecimal amount,
             String transactionId
     ) throws SQLException {
-       
-        NotificationService notificationService = new NotificationServiceImpl();
 
         String senderQuery = "SELECT c.name, c.email, a.bank_name, a.account_number FROM Customer c " +
                             "JOIN Account a ON c.customer_id = a.customer_id " +
@@ -243,7 +270,7 @@ public class TransactionServiceImpl implements TransactionService {
         System.out.println("Receiver Bank: " + receiverBankName);
 
         if (senderEmail != null && senderName != null && !senderEmail.trim().isEmpty()) {
-            System.out.println("\n Sending DEBIT notification to sender: " + senderEmail);
+            System.out.println("\nSending DEBIT notification to sender: " + senderEmail);
             try {
                 notificationService.sendTransactionNotificationToSender(
                     senderEmail,
@@ -254,17 +281,17 @@ public class TransactionServiceImpl implements TransactionService {
                     amount,
                     transactionId
                 );
-                System.out.println(" Sender email sent successfully");
+                System.out.println("Sender email sent successfully");
             } catch (Exception e) {
-                System.err.println(" Failed to send email to sender: " + e.getMessage());
+                System.err.println("Failed to send email to sender: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            System.err.println(" Sender email not found or invalid. Skipping sender notification.");
+            System.err.println("Sender email not found or invalid. Skipping sender notification.");
         }
 
         if (receiverEmail != null && receiverName != null && !receiverEmail.trim().isEmpty()) {
-            System.out.println("\n Sending CREDIT notification to receiver: " + receiverEmail);
+            System.out.println("\nSending CREDIT notification to receiver: " + receiverEmail);
             try {
                 notificationService.sendTransactionNotificationToReceiver(
                     receiverEmail,
@@ -275,13 +302,13 @@ public class TransactionServiceImpl implements TransactionService {
                     amount,
                     transactionId
                 );
-                System.out.println(" Receiver email sent successfully");
+                System.out.println("Receiver email sent successfully");
             } catch (Exception e) {
-                System.err.println(" Failed to send email to receiver: " + e.getMessage());
+                System.err.println("Failed to send email to receiver: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            System.err.println(" Receiver email not found or invalid. Skipping receiver notification.");
+            System.err.println("Receiver email not found or invalid. Skipping receiver notification.");
         }
 
         System.out.println("=== EMAIL NOTIFICATIONS COMPLETED ===\n");
@@ -310,6 +337,7 @@ public class TransactionServiceImpl implements TransactionService {
             while (rs.next()) {
                 Transaction transaction = new Transaction();
                 
+                transaction.setTransactionId(rs.getString("transaction_id"));
                 transaction.setSenderAccountNumber(rs.getString("sender_account_number"));
                 transaction.setReceiverAccountNumber(rs.getString("receiver_account_number"));
                 transaction.setAmount(rs.getBigDecimal("amount"));
@@ -328,11 +356,6 @@ public class TransactionServiceImpl implements TransactionService {
         }
         
         return transactions;
-    }
-
-    @Override
-    public String generateTransactionId() {
-        return "TXN_" + transactionCounter.getAndIncrement();
     }
 
     private String getAccountIdByAccountNumber(Connection conn, String accountNumber) throws SQLException {

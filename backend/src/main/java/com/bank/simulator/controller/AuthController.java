@@ -70,7 +70,7 @@ public class AuthController {
                 user.setId(userId);
                 user.setPassword(null);
                 
-                System.out.println(" Signup successful");
+                System.out.println("Signup successful");
                 return Response.status(Response.Status.CREATED)
                         .entity(ApiResponse.success("User registered successfully", user))
                         .build();
@@ -91,49 +91,117 @@ public class AuthController {
         }
     }
 
-    @POST
-    @Path("/login")
-    public Response login(LoginRequest request) {
-        try {
-            System.out.println("\n=== LOGIN REQUEST ===");
-            System.out.println("Email: " + request.getEmail());
+    // @POST
+    // @Path("/login")
+    // public Response login(LoginRequest request) {
+    //     try {
+    //         System.out.println("\n=== LOGIN REQUEST ===");
+    //         System.out.println("Email: " + request.getEmail());
 
-            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(ApiResponse.error("Email is required"))
-                        .build();
-            }
+    //         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                     .entity(ApiResponse.error("Email is required"))
+    //                     .build();
+    //         }
 
-            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(ApiResponse.error("Password is required"))
-                        .build();
-            }
+    //         if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+    //             return Response.status(Response.Status.BAD_REQUEST)
+    //                     .entity(ApiResponse.error("Password is required"))
+    //                     .build();
+    //         }
 
-            User user = userService.validateLogin(request.getEmail(), request.getPassword());
+    //         User user = userService.validateLogin(request.getEmail(), request.getPassword());
 
-            if (user != null) {
-                System.out.println(" Login successful");
-                return Response.ok()
-                        .entity(ApiResponse.success("Login successful", user))
-                        .build();
-            } else {
-                System.err.println(" Invalid credentials");
-                return Response.status(Response.Status.UNAUTHORIZED)
-                        .entity(ApiResponse.error("Invalid email or password"))
-                        .build();
-            }
+    //         if (user != null) {
+    //             if (!user.isActive()) {
+    //                 System.err.println("USER ACCOUNT IS DEACTIVATED");
+    //                 System.err.println("Email: " + request.getEmail());
+    //                 System.err.println("User ID: " + user.getId());
+    //                 return Response.status(Response.Status.FORBIDDEN)
+    //                         .entity(ApiResponse.error("Your account has been deactivated. Please contact support at bank.simulator.issue@gmail.com for assistance."))
+    //                         .build();
+    //             }
 
-        } catch (Exception e) {
-            System.err.println("=== EXCEPTION IN LOGIN ===");
-            System.err.println("Exception: " + e.getMessage());
-            e.printStackTrace();
+    //             System.out.println("Login successful");
+    //             return Response.ok()
+    //                     .entity(ApiResponse.success("Login successful", user))
+    //                     .build();
+    //         } else {
+    //             System.err.println("Invalid credentials");
+    //             return Response.status(Response.Status.UNAUTHORIZED)
+    //                     .entity(ApiResponse.error("Invalid email or password"))
+    //                     .build();
+    //         }
 
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //     } catch (Exception e) {
+    //         System.err.println("=== EXCEPTION IN LOGIN ===");
+    //         System.err.println("Exception: " + e.getMessage());
+    //         e.printStackTrace();
+
+    //         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+    //                 .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+    //                 .build();
+    //     }
+    // }
+@POST
+@Path("/login")
+public Response login(LoginRequest request) {
+    try {
+        System.out.println("\n=== LOGIN REQUEST ===");
+        System.out.println("Email: " + request.getEmail());
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Email is required"))
                     .build();
         }
+
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiResponse.error("Password is required"))
+                    .build();
+        }
+
+        User user = userService.validateLogin(request.getEmail(), request.getPassword());
+
+        if (user == null) {
+            System.err.println("EMAIL NOT FOUND");
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiResponse.error("No account found with this email. Please sign up to create a new account."))
+                    .build();
+        }
+
+        if ("WRONG_PASSWORD".equals(user.getId())) {
+            System.err.println("WRONG PASSWORD");
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(ApiResponse.error("Invalid email or password"))
+                    .build();
+        }
+
+        if (!user.isActive()) {
+            System.err.println("USER ACCOUNT IS DEACTIVATED");
+            System.err.println("Email: " + request.getEmail());
+            System.err.println("User ID: " + user.getId());
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(ApiResponse.error("Your account has been deactivated. Please contact support at bank.simulator.issue@gmail.com for assistance."))
+                    .build();
+        }
+
+        System.out.println("Login successful");
+        return Response.ok()
+                .entity(ApiResponse.success("Login successful", user))
+                .build();
+
+    } catch (Exception e) {
+        System.err.println("=== EXCEPTION IN LOGIN ===");
+        System.err.println("Exception: " + e.getMessage());
+        e.printStackTrace();
+
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiResponse.error("Internal server error: " + e.getMessage()))
+                .build();
     }
+}
 
     @GET
     @Path("/check-customer")
@@ -162,7 +230,7 @@ public class AuthController {
             data.put("userId", user.getId());
             data.put("email", user.getEmail());
 
-            System.out.println(" Customer record exists: " + hasCustomerRecord);
+            System.out.println("Customer record exists: " + hasCustomerRecord);
 
             return Response.ok()
                     .entity(ApiResponse.success("Customer check completed", data))
@@ -205,7 +273,7 @@ public class AuthController {
                 }
             }
             
-            System.out.println(" Retrieved " + users.size() + " users");
+            System.out.println("Retrieved " + users.size() + " users");
             return Response.ok()
                     .entity(ApiResponse.success("Users retrieved successfully", users))
                     .build();
@@ -237,7 +305,7 @@ public class AuthController {
             
             if (updated) {
                 String message = active ? "Account activated successfully" : "Account deactivated successfully";
-                System.out.println(" " + message);
+                System.out.println(message);
                 return Response.ok()
                         .entity(ApiResponse.success(message))
                         .build();

@@ -80,7 +80,7 @@ const Accounts = () => {
 
       const accountId = await accountService.createAccount(accountData);
       
-      console.log('✅ Account created successfully! ID:', accountId);
+      console.log(' Account created successfully! ID:', accountId);
       toast.success(`Account created successfully!`);
       
       handleReset();
@@ -88,7 +88,7 @@ const Accounts = () => {
       setAccountSearch("");
       setSearchNotFound(false);
     } catch (error: any) {
-      console.error('❌ Account creation failed:', error);
+      console.error(' Account creation failed:', error);
       
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -125,7 +125,7 @@ const Accounts = () => {
         }
       }
     } catch (error: any) {
-      console.error('❌ Update failed:', error);
+      console.error(' Update failed:', error);
       
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -231,24 +231,7 @@ const Accounts = () => {
                     maxLength={12}
                   />
                 </div>
-                
-                {/* <div className="space-y-2">
-                  <Label htmlFor="phoneNumberLinked">Phone Number <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="phoneNumberLinked"
-                    value={formData.phoneNumberLinked}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      if (value.length <= 10) {
-                        setFormData({ ...formData, phoneNumberLinked: value });
-                      }
-                    }}
-                    placeholder="10-digit mobile number"
-                    required
-                    maxLength={10}
-                  />
-                </div> */}
-                
+             
                 <div className="space-y-2">
                   <Label htmlFor="bankName">Bank Name <span className="text-red-500">*</span></Label>
                   <Input
@@ -318,23 +301,6 @@ const Accounts = () => {
                 </Button>
               </div>
             </form>
-                      {/* Report Issue Button */}
-          {/* <div className="mt-6 flex justify-center">
-            <Button
-              type="button"
-              onClick={() => {
-                const email = 'bank.simulator.issue@gmail.com';
-                const subject = 'Issue Report - Bank Simulator - Account Dashboard';
-                const body = `Dear Admin,%0D%0A%0D%0AI am facing an issue with the Account Management dashboard. Please look into this.%0D%0A%0D%0ADescription of issue:%0D%0A%0D%0A`;
-                
-                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${body}`;
-                window.open(gmailUrl, '_blank');
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              Report Issue
-            </Button>
-          </div> */}
           <div className="mt-4">
   <Button
     type="button"

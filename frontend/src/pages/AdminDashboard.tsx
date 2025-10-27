@@ -513,22 +513,6 @@ const AdminDashboard = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => toggleCustomerStatus(customer)}
-                                title={
-                                  customer.status.toLowerCase() === 'active'
-                                    ? 'Deactivate'
-                                    : 'Activate'
-                                }
-                              >
-                                {customer.status.toLowerCase() === 'active' ? (
-                                  <UserX className="h-4 w-4 text-orange-600" />
-                                ) : (
-                                  <UserCheck className="h-4 w-4 text-green-600" />
-                                )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
                                 onClick={() =>
                                   setDeleteDialog({
                                     open: true,

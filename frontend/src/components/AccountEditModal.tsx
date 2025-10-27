@@ -83,22 +83,6 @@ export const AccountEditModal = ({
               />
             </div>
 
-            {/* Phone Number
-            <div className="space-y-2">
-              <Label htmlFor="edit-phoneNumber">Phone Number</Label>
-              <Input
-                id="edit-phoneNumber"
-                value={account.phoneNumberLinked}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  if (value.length <= 10) {
-                    onChange({ ...account, phoneNumberLinked: value });
-                  }
-                }}
-                maxLength={10}
-              />
-            </div> */}
-
             {/* Aadhar Number (Read-only) */}
             <div className="space-y-2">
               <Label htmlFor="edit-aadhar">Aadhar Number</Label>

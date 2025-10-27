@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
             
             if (rs.next()) {
                 int maxId = rs.getInt("max_id");
-                System.out.println(" Loaded max user ID from database: " + maxId);
+                System.out.println("Loaded max user ID from database: " + maxId);
                 return maxId;
             }
         } catch (SQLException e) {
@@ -40,88 +40,88 @@ public class UserServiceImpl implements UserService {
         return 0;
     }
 
-   @Override
-public String createUser(User user) {
-    System.out.println("\n=== USER CREATION STARTED ===");
-    System.out.println("Full Name: " + user.getFullName());
-    System.out.println("Email: " + user.getEmail());
-    
-    String userId = generateUserId();
-    user.setId(userId);
-    user.setActive(true); 
-    user.setCreatedAt(LocalDateTime.now());
-    user.setUpdatedAt(LocalDateTime.now());
-    
-    String query = """
-        INSERT INTO User (id, full_name, email, password, active, created_at, updated_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """;
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    @Override
+    public String createUser(User user) {
+        System.out.println("\n=== USER CREATION STARTED ===");
+        System.out.println("Full Name: " + user.getFullName());
+        System.out.println("Email: " + user.getEmail());
         
-        stmt.setString(1, user.getId());
-        stmt.setString(2, user.getFullName());
-        stmt.setString(3, user.getEmail());
-        stmt.setString(4, user.getPassword());
-        stmt.setBoolean(5, user.isActive());
-        stmt.setTimestamp(6, Timestamp.valueOf(user.getCreatedAt()));
-        stmt.setTimestamp(7, Timestamp.valueOf(user.getUpdatedAt()));
+        String userId = generateUserId();
+        user.setId(userId);
+        user.setActive(true); 
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
         
-        int result = stmt.executeUpdate();
+        String query = """
+            INSERT INTO User (id, full_name, email, password, active, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
         
-        if (result > 0) {
-            System.out.println(" User created successfully");
-            System.out.println("User ID: " + userId);
-            return userId;
-        } else {
-            System.err.println(" User creation failed - no rows affected");
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, user.getId());
+            stmt.setString(2, user.getFullName());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPassword());
+            stmt.setBoolean(5, user.isActive());
+            stmt.setTimestamp(6, Timestamp.valueOf(user.getCreatedAt()));
+            stmt.setTimestamp(7, Timestamp.valueOf(user.getUpdatedAt()));
+            
+            int result = stmt.executeUpdate();
+            
+            if (result > 0) {
+                System.out.println("User created successfully");
+                System.out.println("User ID: " + userId);
+                return userId;
+            } else {
+                System.err.println("User creation failed - no rows affected");
+                return null;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error creating user: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-    } catch (SQLException e) {
-        System.err.println("Error creating user: " + e.getMessage());
-        e.printStackTrace();
-        return null;
     }
-}
 
     @Override
-public User getUserByEmail(String email) {
-    System.out.println("\n=== FETCHING USER BY EMAIL ===");
-    System.out.println("Email: " + email);
-    
-    String query = "SELECT * FROM User WHERE email = ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    public User getUserByEmail(String email) {
+        System.out.println("\n=== FETCHING USER BY EMAIL ===");
+        System.out.println("Email: " + email);
         
-        stmt.setString(1, email);
-        ResultSet rs = stmt.executeQuery();
+        String query = "SELECT * FROM User WHERE email = ?";
         
-        if (rs.next()) {
-            User user = new User();
-            user.setId(rs.getString("id"));
-            user.setFullName(rs.getString("full_name"));
-            user.setEmail(rs.getString("email"));
-            user.setPassword(rs.getString("password"));
-            user.setActive(rs.getBoolean("active"));
-            user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             
-            System.out.println(" User found: " + user.getFullName());
-            return user;
-        } else {
-            System.out.println(" User not found");
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setFullName(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setActive(rs.getBoolean("active"));
+                user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+                
+                System.out.println("User found: " + user.getFullName());
+                return user;
+            } else {
+                System.out.println("User not found");
+                return null;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error fetching user by email: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-    } catch (SQLException e) {
-        System.err.println("Error fetching user by email: " + e.getMessage());
-        e.printStackTrace();
-        return null;
     }
-}
 
     @Override
     public boolean isEmailExists(String email) {
@@ -136,9 +136,9 @@ public User getUserByEmail(String email) {
             if (rs.next()) {
                 boolean exists = rs.getInt(1) > 0;
                 if (exists) {
-                    System.out.println(" Email already exists: " + email);
+                    System.out.println("Email already exists: " + email);
                 } else {
-                    System.out.println(" Email is unique: " + email);
+                    System.out.println("Email is unique: " + email);
                 }
                 return exists;
             }
@@ -149,42 +149,47 @@ public User getUserByEmail(String email) {
         return false;
     }
 
-   @Override
+    @Override
 public User validateLogin(String email, String password) {
     System.out.println("\n=== VALIDATING LOGIN ===");
     System.out.println("Email: " + email);
     
-    String query = "SELECT * FROM User WHERE email = ? AND password = ?";
+    String checkEmailQuery = "SELECT * FROM User WHERE email = ?";
     
     try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+         PreparedStatement emailStmt = conn.prepareStatement(checkEmailQuery)) {
         
-        stmt.setString(1, email);
-        stmt.setString(2, password);
-        ResultSet rs = stmt.executeQuery();
+        emailStmt.setString(1, email);
+        ResultSet emailRs = emailStmt.executeQuery();
         
-        if (rs.next()) {
-            User user = new User();
-            user.setId(rs.getString("id"));
-            user.setFullName(rs.getString("full_name"));
-            user.setEmail(rs.getString("email"));
-            user.setPassword(null); 
-            user.setActive(rs.getBoolean("active"));
-            user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-            
-          
-            if (!user.isActive()) {
-                System.out.println(" User account is deactivated");
-                return null; 
-            }
-            
-            System.out.println(" Login successful for: " + user.getFullName());
-            return user;
-        } else {
-            System.out.println(" Invalid credentials");
+        if (!emailRs.next()) {
+            System.out.println("EMAIL NOT FOUND - User does not exist");
             return null;
         }
+        
+        String storedPassword = emailRs.getString("password");
+        
+        if (!password.equals(storedPassword)) {
+            System.out.println("WRONG PASSWORD - Email exists but password is incorrect");
+            User wrongPasswordUser = new User();
+            wrongPasswordUser.setEmail(email);
+            wrongPasswordUser.setId("WRONG_PASSWORD");
+            return wrongPasswordUser;
+        }
+        
+        User user = new User();
+        user.setId(emailRs.getString("id"));
+        user.setFullName(emailRs.getString("full_name"));
+        user.setEmail(emailRs.getString("email"));
+        user.setPassword(null);
+        user.setActive(emailRs.getBoolean("active"));
+        user.setCreatedAt(emailRs.getTimestamp("created_at").toLocalDateTime());
+        user.setUpdatedAt(emailRs.getTimestamp("updated_at").toLocalDateTime());
+        
+        System.out.println("User found: " + user.getFullName());
+        System.out.println("User account status: " + (user.isActive() ? "Active" : "Inactive"));
+        
+        return user;
         
     } catch (SQLException e) {
         System.err.println("Error validating login: " + e.getMessage());
@@ -192,75 +197,76 @@ public User validateLogin(String email, String password) {
         return null;
     }
 }
-
+ 
     @Override
-public boolean updateUserStatus(String email, boolean active) {
-    System.out.println("\n=== UPDATING USER STATUS ===");
-    System.out.println("Email: " + email);
-    System.out.println("New Status: " + (active ? "Active" : "Inactive"));
-    
-    String query = "UPDATE User SET active = ?, updated_at = ? WHERE email = ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    public boolean updateUserStatus(String email, boolean active) {
+        System.out.println("\n=== UPDATING USER STATUS ===");
+        System.out.println("Email: " + email);
+        System.out.println("New Status: " + (active ? "Active" : "Inactive"));
         
-        stmt.setBoolean(1, active);
-        stmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
-        stmt.setString(3, email);
+        String query = "UPDATE User SET active = ?, updated_at = ? WHERE email = ?";
         
-        int result = stmt.executeUpdate();
-        
-        if (result > 0) {
-            System.out.println(" User status updated successfully");
-            return true;
-        } else {
-            System.err.println(" User not found");
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setBoolean(1, active);
+            stmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setString(3, email);
+            
+            int result = stmt.executeUpdate();
+            
+            if (result > 0) {
+                System.out.println("User status updated successfully");
+                return true;
+            } else {
+                System.err.println("User not found");
+                return false;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error updating user status: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
-        
-    } catch (SQLException e) {
-        System.err.println("Error updating user status: " + e.getMessage());
-        e.printStackTrace();
-        return false;
     }
-}
 
-@Override
-public User getUserById(String userId) {
-    System.out.println("\n=== FETCHING USER BY ID ===");
-    System.out.println("User ID: " + userId);
-    
-    String query = "SELECT * FROM User WHERE id = ?";
-    
-    try (Connection conn = DBConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
+    @Override
+    public User getUserById(String userId) {
+        System.out.println("\n=== FETCHING USER BY ID ===");
+        System.out.println("User ID: " + userId);
         
-        stmt.setString(1, userId);
-        ResultSet rs = stmt.executeQuery();
+        String query = "SELECT * FROM User WHERE id = ?";
         
-        if (rs.next()) {
-            User user = new User();
-            user.setId(rs.getString("id"));
-            user.setFullName(rs.getString("full_name"));
-            user.setEmail(rs.getString("email"));
-            user.setPassword(rs.getString("password"));
-            user.setActive(rs.getBoolean("active"));
-            user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             
-            System.out.println(" User found: " + user.getFullName());
-            return user;
-        } else {
-            System.out.println(" User not found");
+            stmt.setString(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setFullName(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setActive(rs.getBoolean("active"));
+                user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                user.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+                
+                System.out.println("User found: " + user.getFullName());
+                return user;
+            } else {
+                System.out.println("User not found");
+                return null;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error fetching user by ID: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-    } catch (SQLException e) {
-        System.err.println("Error fetching user by ID: " + e.getMessage());
-        e.printStackTrace();
-        return null;
     }
-}
+    
     @Override
     public String generateUserId() {
         return "USER_" + userCounter.getAndIncrement();

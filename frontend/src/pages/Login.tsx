@@ -73,16 +73,8 @@ const Login = () => {
           console.log('Customer record status:', hasCustomerRecord);
           
           toast.success("Login successful!");
-          
-          if (hasCustomerRecord) {
-            console.log('User has customer record, redirecting to dashboard');
-            navigate("/dashboard");
-          } else {
-            console.log('User does not have customer record, redirecting to dashboard');
-            navigate("/dashboard");
-          }
+          navigate("/dashboard");
         } catch (customerCheckError: any) {
-          // If customer check fails, default to no customer record
           console.warn('Customer check failed, defaulting to no customer record:', customerCheckError);
           localStorage.setItem('hasCustomerRecord', 'false');
           navigate("/dashboard");
@@ -94,9 +86,27 @@ const Login = () => {
     catch (error: any) {
       console.error("Login error:", error);
       
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.response?.status === 401) {
+      const errorMessage = error.response?.data?.message || "";
+      const statusCode = error.response?.status;
+      
+      if (statusCode === 404 || errorMessage.toLowerCase().includes("no account found") || 
+          errorMessage.toLowerCase().includes("sign up")) {
+        toast.error(
+          errorMessage || "No account found with this email. Please sign up to create a new account.",
+          { 
+            duration: 6000,
+            action: {
+              label: "Sign Up",
+              onClick: () => navigate("/signup")
+            }
+          }
+        );
+      } else if (statusCode === 403 || errorMessage.toLowerCase().includes("deactivated") || 
+          errorMessage.toLowerCase().includes("contact support")) {
+        toast.error(errorMessage, { duration: 7000 });
+      } else if (errorMessage) {
+        toast.error(errorMessage);
+      } else if (statusCode === 401) {
         toast.error("Invalid email or password");
       } else if (error.code === 'ERR_NETWORK') {
         toast.error("Cannot connect to server. Ensure backend is running.");
@@ -165,14 +175,6 @@ const Login = () => {
                 )}
               </Button>
             </form>
-            
-            {/* Admin hint - Optional */}
-            {/* <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
-                <Shield className="h-3 w-3" />
-                Admin Access: admin@bank.com
-              </p>
-            </div> */}
 
             <div className="mt-4 text-center text-sm">
               <span className="text-muted-foreground">New user? </span>

@@ -27,7 +27,7 @@ export const CustomerEditModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(customer); // Backend will handle all validation
+    onSave(customer); 
   };
 
   return (
@@ -61,21 +61,6 @@ export const CustomerEditModal = ({
               />
             </div>
 
-            {/* Phone Number
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone">Phone Number</Label>
-              <Input
-                id="edit-phone"
-                value={customer.phoneNumber}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  if (value.length <= 10) {
-                    onChange({ ...customer, phoneNumber: value });
-                  }
-                }}
-                maxLength={10}
-              />
-            </div> */}
 
             {/* Email */}
             <div className="space-y-2">

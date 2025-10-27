@@ -132,8 +132,8 @@ const Home = () => {
             <h2 className="text-4xl font-bold mb-4">Get In Touch</h2>
             <p className="text-muted-foreground mb-8">Have questions? We'd love to hear from you.</p>
             <div className="flex justify-center gap-6">
-              <a href="mailto:contact@Bank Simulation.com" className="text-primary hover:text-secondary transition-colors">
-                contact@Bank Simulation.com
+              <a href="mailto:bank.simulator.issue@gmail.com" className="text-primary hover:text-secondary transition-colors">
+                bank.simulator.issue@gmail.com
               </a>
               <span className="text-muted-foreground">|</span>
               <a href="tel:+1234567890" className="text-primary hover:text-secondary transition-colors">

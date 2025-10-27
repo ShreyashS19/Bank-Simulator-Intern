@@ -27,13 +27,13 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 Loading dashboard data...');
+      console.log(' Loading dashboard data...');
       
       const customers = await customerService.getAllCustomers();
       const accounts = await accountService.getAllAccounts();
       const transactions = await transactionService.getAllTransactions();
       
-      console.log('📊 Data loaded:');
+      console.log(' Data loaded:');
       console.log('- Customers:', customers.length);
       console.log('- Accounts:', accounts.length);
       console.log('- Transactions:', transactions.length);
@@ -46,7 +46,7 @@ const Dashboard = () => {
         sum + Number(txn.amount || 0), 0
       );
       
-      console.log('💰 Total Transaction Volume:', totalVolume);
+      console.log(' Total Transaction Volume:', totalVolume);
 
       const now = new Date();
       const dailyData = [];
@@ -77,7 +77,7 @@ const Dashboard = () => {
         });
       }
 
-      console.log('📊 Daily transaction data (last 7 days):', dailyData);
+      console.log(' Daily transaction data (last 7 days):', dailyData);
 
       const balanceData = [
         { name: 'Savings', value: 47 },
@@ -119,7 +119,7 @@ const Dashboard = () => {
         amount: bucket.amount
       }));
 
-      console.log('📈 Monthly trend data (Calendar weeks):', trendData);
+      console.log(' Monthly trend data (Calendar weeks):', trendData);
 
       setStats({
         totalCustomers: customers.length,
@@ -134,7 +134,7 @@ const Dashboard = () => {
       setMonthlyTrend(trendData);
 
     } catch (error) {
-      console.error('❌ Error loading dashboard data:', error);
+      console.error(' Error loading dashboard data:', error);
     } finally {
       setIsLoading(false);
     }

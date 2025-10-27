@@ -150,60 +150,12 @@ const Customers = () => {
     }
   };
 
-  // const handleEdit = async (customer: Customer) => {
-  //   if (!customer.customerId) {
-  //     toast.error("Customer ID is missing. Cannot update customer.");
-  //     return;
-  //   }
-    
-  //   if (!customer.customerPin || customer.customerPin.length !== 6) {
-  //     toast.error("Please enter your 6-digit PIN to confirm changes");
-  //     return;
-  //   }
-    
-  //   setIsLoading(true);
-    
-  //   try {
-  //     console.log('📝 Updating customer:', customer.customerId);
-      
-  //     await customerService.updateCustomer(customer.customerId, customer);
-      
-  //     toast.success("Customer updated successfully!");
-  //     setEditingCustomer(null);
-      
-  //     // Refresh the searched customer data if it's the same one
-  //     if (searchedCustomer?.customerId === customer.customerId) {
-  //       try {
-  //         const updatedCustomer = await customerService.getCustomerByAadhar(customer.aadharNumber);
-  //         setSearchedCustomer(updatedCustomer);
-  //       } catch (error) {
-  //         console.warn('Could not refresh customer data');
-  //       }
-  //     }
-  //   } catch (error: any) {
-  //     console.error('❌ Update failed:', error);
-      
-  //     if (error.response?.data?.message) {
-  //       toast.error(error.response.data.message);
-  //     } else if (error.response?.status === 400) {
-  //       toast.error('Validation failed. Check all fields and try again.');
-  //     } else if (error.response?.status === 404) {
-  //       toast.error('Customer not found');
-  //     } else {
-  //       toast.error('Failed to update customer');
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 const handleEdit = async (customer: Customer) => {
-  // Validate that Aadhar number exists (this is our identifier)
   if (!customer.aadharNumber || customer.aadharNumber.length !== 12) {
     toast.error("Aadhar number is missing or invalid. Cannot update customer.");
     return;
   }
   
-  // Validate PIN
   if (!customer.customerPin || customer.customerPin.length !== 6) {
     toast.error("Please enter your 6-digit PIN to confirm changes");
     return;
@@ -212,15 +164,13 @@ const handleEdit = async (customer: Customer) => {
   setIsLoading(true);
   
   try {
-    console.log('📝 Updating customer via Aadhar:', customer.aadharNumber);
+    console.log(' Updating customer via Aadhar:', customer.aadharNumber);
     
-    // Use Aadhar number as identifier (Customer ID is never exposed to user)
     await customerService.updateCustomerByAadhar(customer.aadharNumber, customer);
     
     toast.success("Customer updated successfully!");
     setEditingCustomer(null);
-    
-    // Refresh the searched customer data if it's the same one
+   
     if (searchedCustomer?.aadharNumber === customer.aadharNumber) {
       try {
         const updatedCustomer = await customerService.getCustomerByAadhar(customer.aadharNumber);
@@ -230,7 +180,7 @@ const handleEdit = async (customer: Customer) => {
       }
     }
   } catch (error: any) {
-    console.error('❌ Update failed:', error);
+    console.error(' Update failed:', error);
     
     if (error.response?.data?.message) {
       toast.error(error.response.data.message);
@@ -255,8 +205,7 @@ const handleEdit = async (customer: Customer) => {
       await customerService.deleteCustomer(deletingCustomer.aadharNumber);
       toast.success("Customer deleted successfully!");
       setDeletingCustomer(null);
-      
-      // Clear search results if the deleted customer was being displayed
+    
       if (searchedCustomer?.aadharNumber === deletingCustomer.aadharNumber) {
         setSearchedCustomer(null);
         setAadharSearch("");

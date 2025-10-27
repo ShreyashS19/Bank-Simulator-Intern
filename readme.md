@@ -1,258 +1,216 @@
-# 🏦 Bank Simulator
+# 🏦 Banking Activity Simulation Platform
 
-A **full-stack banking management system** that simulates essential banking operations such as customer onboarding, account management, authentication, and secure fund transactions.
-This project uses a **Java (Jersey + MySQL)** backend and a **React (Vite + TypeScript + Tailwind)** frontend.
+A **full-stack banking management system** that replicates real-world banking workflows — from user authentication to transaction management — built using **Java (Jersey + MySQL)** and **React (Vite + TypeScript + Tailwind)**.
 
----
-
-## 📋 Table of Contents
-
-1. [Introduction](#introduction)
-2. [Tech Stack](#tech-stack)
-3. [Project Structure](#project-structure)
-4. [Features](#features)
-5. [Installation](#installation)
-6. [Configuration](#configuration)
-7. [Usage](#usage)
-8. [API Endpoints](#api-endpoints)
-9. [Frontend Setup](#frontend-setup)
-10. [Testing](#testing)
-11. [Troubleshooting](#troubleshooting)
-12. [License](#license)
+> 🚀 Developed as part of the **Banking Activity Simulation Internship (Oct 2025)**  
+> by **Shreyash Shinde**
 
 ---
 
-## 🧭 Introduction
+## 🌟 Recent Highlights & Updates (Oct 2025)
 
-**Bank Simulator** is a comprehensive RESTful application that mimics the operations of a modern digital banking platform.
-It allows admins or system operators to:
+### 🧠 Smarter Authentication
+- Enhanced login system:
+  - Handles **deactivated users** with a clear message and support contact.
+- Added stronger password and field validation on both frontend & backend.
 
-* Create and manage customer accounts
-* Handle transactions with validation and error handling
-* Manage user authentication securely
-* Export transaction records to Excel
+### 💰 Real Transaction Workflow
+- Validates PIN, balance, and account status before transfer.  
+- Prevents **self-transfers** and **invalid account numbers**.  
+- Ensures both sender and receiver accounts are **active**.  
+- Generates **unique transaction IDs** with proper tracking.
+
+### 📧 Gmail Notification Integration
+- Added **Jakarta Mail SMTP integration** for Gmail.  
+- After every successful transaction, both **sender and receiver** get an **email confirmation**.  
+- Uses secure SMTP authentication with `bank.simulator.issue@gmail.com` for transaction alerts.
+
+### 📊 Excel Report Generation
+- Users and admins can **download all transactions** in Excel format directly from the dashboard.  
+- Implemented using **Apache POI** for clean formatting and timestamped exports.  
+- API: `/api/transaction/download/all`
+
+### 🧾 Auto Database Initialization
+- Introduced `DatabaseInitializerListener.java` to **auto-create database and tables** if not present.  
+- Removes need for manual SQL imports.
+
+### ⚙️ Validation & Error Handling
+- Added strict validators for Customer, Account, and Transaction entities.  
+- Ensures valid Aadhar (12 digits), phone number, and 6-digit PIN.  
+- Centralized and reusable error handling using `ApiResponse.java`.
+
+### 🧑‍💻 Developer Experience
+- Cleaner code organization and improved logs for debugging.  
+- JUnit + Mockito testing for controller, service, and validator layers.  
+- Modular architecture separating concerns for easy scaling.
 
 ---
 
-## ⚙️ Tech Stack
+## 🧩 Tech Stack
 
 ### **Backend**
-
-* **Language:** Java 22
-* **Framework:** Jersey (Jakarta RESTful Web Services 3.1.3)
-* **Database:** MySQL
-* **Build Tool:** Maven
-* **Testing:** JUnit 5, Mockito
-* **Excel Generation:** Apache POI
-* **Mailing:** Jakarta Mail
+- **Language:** Java 22  
+- **Framework:** Jersey (Jakarta RESTful Web Services 3.1.3)  
+- **Database:** MySQL  
+- **Build Tool:** Maven  
+- **Testing:** JUnit 5, Mockito  
+- **Excel Export:** Apache POI  
+- **Mailing:** Jakarta Mail (Gmail SMTP)  
 
 ### **Frontend**
-
-* **Framework:** React (Vite + TypeScript)
-* **Styling:** Tailwind CSS
-* **UI Components:** Shadcn/UI
-* **Linting:** ESLint
+- **Framework:** React (Vite + TypeScript)  
+- **Styling:** Tailwind CSS  
+- **UI Library:** Shadcn/UI  
+- **Build Tools:** Vite, ESLint  
 
 ---
 
 ## 📁 Project Structure
 
 ```
-shreyashs19-without-valid/
+shreyashs19-bank-simulator-intern/
 ├── backend/
 │   ├── pom.xml
 │   ├── src/
 │   │   ├── main/java/com/bank/simulator/
-│   │   │   ├── config/           # App configs (DB, CORS, Rest API setup)
-│   │   │   ├── controller/       # REST endpoints
-│   │   │   ├── model/            # Data models
-│   │   │   ├── service/          # Business logic & interfaces
-│   │   │   ├── service/impl/     # Implementations
-│   │   │   └── validation/       # Data validators
-│   │   └── test/java/...         # Unit tests
+│   │   │   ├── config/           # DBConfig, CORS, Auto DB Setup
+│   │   │   ├── controller/       # Auth, Account, Customer, Transaction APIs
+│   │   │   ├── model/            # Entity Classes (User, Account, Transaction, etc.)
+│   │   │   ├── service/          # Business Logic + Email + Excel Export
+│   │   │   ├── validation/       # Input Validators
+│   │   └── test/                 # JUnit & Mockito Tests
 │   └── webapp/WEB-INF/web.xml
 │
 └── frontend/
     ├── src/
-    │   ├── pages/                # Page views (Dashboard, Login, Accounts)
-    │   ├── components/           # UI components and modals
-    │   ├── services/             # API calls to backend
-    │   └── utils/                # Helpers (Excel export, toasts, etc.)
+    │   ├── pages/                # UI Pages (Login, Dashboard, Accounts, etc.)
+    │   ├── components/           # Reusable Components & Modals
+    │   ├── services/             # API Integrations (Axios)
+    │   ├── utils/                # Excel Export, Toasts, etc.
+    │   └── hooks/                # Custom React Hooks
     ├── public/
     ├── package.json
-    └── vite.config.ts
+    ├── vite.config.ts
+    └── tailwind.config.ts
 ```
 
 ---
 
-## 🚀 Features
+## ⚙️ Backend Setup
 
-### Backend
+### **Requirements**
+- Java 22+
+- Maven 3.9+
+- MySQL (port 3306)
+- Gmail account for mail notifications
 
-* ✅ RESTful API built with **Jersey**
-* ✅ **Authentication** with email/password
-* ✅ CRUD operations for **Customers**, **Accounts**, and **Transactions**
-* ✅ **Excel export** for transaction history
-* ✅ Input **validation and error handling**
-* ✅ **CORS** enabled for frontend integration
-* ✅ **Automatic database initialization**
-
-### Frontend
-
-* 💡 Interactive dashboard for managing customers and accounts
-* 📊 Transaction viewing and export options
-* 🔐 Login and signup flow
-* 🌙 Responsive UI with Tailwind CSS
-* 🧩 Modular and reusable component design
-
----
-
-## ⚙️ Installation
-
-### Prerequisites
-
-* Java 22+
-* Maven 3.9+
-* Node.js 18+
-* MySQL Server running locally (default port 3306)
-
-### Clone Repository
-
+### **Steps**
 ```bash
-git clone https://github.com/your-username/bank-simulator.git
-cd bank-simulator
+cd backend
+mvn clean package
+mvn jetty:run
 ```
 
----
+✅ Auto creates database `bank_simulation` and required tables.  
+Backend runs on:
+```
+http://localhost:8080/api
+```
 
-## 🛠️ Backend Setup
+### **Mail Configuration**
+In `application.properties`, set your Gmail credentials:
+```properties
+mail.smtp.host=smtp.gmail.com
+mail.smtp.port=587
+mail.smtp.auth=true
+mail.smtp.starttls.enable=true
+mail.username=your-email@gmail.com
+mail.password=your-app-password
+```
 
-1. Navigate to the backend folder:
-
-   ```bash
-   cd backend
-   ```
-
-2. Create a configuration file:
-
-   ```bash
-   cp src/main/resources/application.properties.example src/main/resources/application.properties
-   ```
-
-3. Update the DB credentials in `application.properties`:
-
-   ```properties
-   db.url=jdbc:mysql://localhost:3306/bank_simulation?useSSL=false&serverTimezone=UTC
-   db.username=root
-   db.password=yourpassword
-   ```
-
-4. Build the WAR package:
-
-   ```bash
-   mvn clean package
-   ```
-
-5. Deploy on Tomcat or run with an embedded server:
-
-   ```bash
-   mvn jetty:run
-   ```
-
-6. The API will be available at:
-
-   ```
-   http://localhost:8080/api
-   ```
+*(Use a Gmail App Password — not your regular password.)*
 
 ---
 
 ## 🌐 Frontend Setup
 
-1. Move to the frontend directory:
+### **Requirements**
+- Node.js 18+
 
-   ```bash
-   cd frontend
-   ```
+### **Steps**
+```bash
+cd frontend
+npm install
+cp .env.example .env
+```
 
-2. Install dependencies:
+Set your backend API URL:
+```
+VITE_API_URL=http://localhost:8080/api
+```
 
-   ```bash
-   npm install
-   ```
+Run the development server:
+```bash
+npm run dev
+```
 
-3. Create `.env` file from example:
+Frontend will be available at:
+```
+http://localhost:5173
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+---
 
-   Set your backend API URL:
+## 🔗 Key API Endpoints
 
-   ```env
-   VITE_API_URL=http://localhost:8080/api
-   ```
-
-4. Run the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-5. Open your browser at:
-
-   ```
-   http://localhost:5173
-   ```
+| Method | Endpoint | Description |
+|--------|-----------|--------------|
+| **POST** | `/api/auth/signup` | Register a new user |
+| **POST** | `/api/auth/login` | Authenticate user |
+| **GET** | `/api/auth/users/all` | Get all users |
+| **PUT** | `/api/auth/user/status` | Activate / Deactivate user |
+| **POST** | `/api/customer/onboard` | Add new customer |
+| **GET** | `/api/customer/all` | List all customers |
+| **PUT** | `/api/customer/aadhar/{aadhar}` | Update customer by Aadhar |
+| **POST** | `/api/account/add` | Create a new account |
+| **GET** | `/api/account/all` | View all accounts |
+| **POST** | `/api/transaction/createTransaction` | Create a transaction (triggers email + balance update) |
+| **GET** | `/api/transaction/download/all` | Download all transactions as Excel |
 
 ---
 
 ## 🧪 Testing
 
-To execute all unit tests:
-
+Run all unit tests:
 ```bash
 cd backend
 mvn test
 ```
 
-JUnit and Mockito are used for testing services, controllers, and validations.
+Includes:
+- **Controller Tests** — API validation  
+- **Service Tests** — Business logic and DB mock testing  
+- **Validation Tests** — Input validation and error handling  
 
 ---
 
-## 🧰 API Endpoints
+## 🧰 Troubleshooting
 
-| Method     | Endpoint                               | Description                        |
-| ---------- | -------------------------------------- | ---------------------------------- |
-| **POST**   | `/api/auth/signup`                     | Register a new user                |
-| **POST**   | `/api/auth/login`                      | Authenticate a user                |
-| **POST**   | `/api/customer/onboard`                | Create a new customer              |
-| **GET**    | `/api/customer/all`                    | Get all customers                  |
-| **PUT**    | `/api/customer/aadhar/{aadharNumber}`  | Update customer by Aadhar          |
-| **DELETE** | `/api/customer/aadhar/{aadharNumber}`  | Delete customer                    |
-| **POST**   | `/api/account/add`                     | Create new account                 |
-| **GET**    | `/api/account/all`                     | List all accounts                  |
-| **PUT**    | `/api/account/number/{account_number}` | Update account by number           |
-| **DELETE** | `/api/account/number/{account_number}` | Delete account                     |
-| **POST**   | `/api/transaction/createTransaction`   | Create a transaction               |
-| **GET**    | `/api/transaction/all`                 | Fetch all transactions             |
-| **GET**    | `/api/transaction/download/all`        | Download all transactions as Excel |
+| Issue | Solution |
+|--------|-----------|
+| `MySQL JDBC Driver not found` | Ensure dependency is present in `pom.xml`. |
+| `Gmail SMTP authentication failed` | Enable 2-Step verification and create an App Password. |
+| `Frontend not connecting` | Check `.env` for correct `VITE_API_URL`. |
+| `Port 8080 already in use` | Update port in `application.properties`. |
+| `CORS blocked` | Ensure `CorsFilter.java` is registered with `@Provider`. |
 
 ---
-
-## ⚙️ Troubleshooting
-
-| Issue                                | Solution                                                        |
-| ------------------------------------ | --------------------------------------------------------------- |
-| `MySQL JDBC Driver not found`        | Ensure MySQL connector JAR is available or configured via Maven |
-| `CORS blocked`                       | Verify `CorsFilter.java` is active under `@Provider`            |
-| `Port already in use`                | Change server port in `application.properties`                  |
-| `Frontend not connecting to backend` | Check `.env` variable `VITE_API_URL`                            |
-
----
-
-
 
 ## 📜 License
 
-This project is licensed under the **MIT License** — see the `LICENSE` file for details.
+This project is licensed under the [MIT License](./LICENSE.txt).  
+© 2025 **Shreyash Shinde** — All rights reserved.
+
+---
+
+> 💡 *“Code that simulates reality is one step closer to innovation.”*

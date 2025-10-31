@@ -77,6 +77,10 @@ public class CustomerValidator {
             // if (!emailUniqueValidation.isValid()) {
             //     result.addError(emailUniqueValidation.getFirstErrorMessage(), "EMAIL_EXISTS");
             // }
+            ValidationResult emailUniqueValidation = validateEmailUniqueness(customer.getEmail());
+            if (!emailUniqueValidation.isValid()) {
+                result.addError(emailUniqueValidation.getFirstErrorMessage(), "EMAIL_EXISTS");
+            }
             
             ValidationResult aadharUniqueValidation = validateAadharNumberUniqueness(customer.getAadharNumber());
             if (!aadharUniqueValidation.isValid()) {

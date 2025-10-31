@@ -151,6 +151,6 @@ public class DatabaseInitializerListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("WebApp SHUTTING DOWN: Database connections closed.");
+        System.out.println("WebApp SHUTTING DOWN: Database connections clossed.");
     }
 }
